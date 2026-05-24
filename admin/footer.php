@@ -19,22 +19,7 @@
         // CSRF Token for AJAX requests
         const csrfToken = '<?= $csrfToken ?>';
 
-        // Configure Toastr - ปรับให้เห็นชัดขึ้น
-        toastr.options = {
-            closeButton: true,
-            progressBar: true,
-            positionClass: "toast-top-right",
-            timeOut: 5000,              // แสดง 5 วินาที
-            extendedTimeOut: 2000,      // hover แล้วเพิ่มอีก 2 วินาที
-            showEasing: "swing",
-            hideEasing: "linear",
-            showMethod: "fadeIn",
-            hideMethod: "fadeOut",
-            newestOnTop: true,
-            preventDuplicates: true
-        };
-
-        // Toggle Sidebar (Mobile)
+        // Toggle Sidebar (Mobile) — defined first so CDN failures below can't hide it
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('show');
         }
@@ -43,11 +28,27 @@
         document.addEventListener('click', function(e) {
             const sidebar = document.getElementById('sidebar');
             const toggleBtn = document.querySelector('[onclick="toggleSidebar()"]');
-
-            if (window.innerWidth < 992 && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+            if (sidebar && toggleBtn && window.innerWidth < 992 && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
                 sidebar.classList.remove('show');
             }
         });
+
+        // Configure Toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.options = {
+                closeButton: true,
+                progressBar: true,
+                positionClass: "toast-top-right",
+                timeOut: 5000,
+                extendedTimeOut: 2000,
+                showEasing: "swing",
+                hideEasing: "linear",
+                showMethod: "fadeIn",
+                hideMethod: "fadeOut",
+                newestOnTop: true,
+                preventDuplicates: true
+            };
+        }
 
         // Initialize DataTables with Thai language (inline to avoid CORS issues)
         if ($.fn.DataTable) {
@@ -87,15 +88,17 @@
         }
 
         // AJAX Setup with CSRF
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-Token': csrfToken
-            }
-        });
+        if (typeof $ !== 'undefined') {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-Token': csrfToken
+                }
+            });
+        }
 
         // Show flash messages if any
         <?php if ($flash = getFlash()): ?>
-        toastr.<?= $flash['type'] ?>('<?= addslashes($flash['message']) ?>');
+        if (typeof toastr !== 'undefined') toastr.<?= $flash['type'] ?>('<?= addslashes($flash['message']) ?>');
         <?php endif; ?>
 
         // Confirm delete
