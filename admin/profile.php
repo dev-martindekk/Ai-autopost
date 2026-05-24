@@ -172,36 +172,6 @@ $user = db()->fetchOne("SELECT * FROM admin_users WHERE id = ?", [$userId]);
             </div>
         </div>
     </div>
-
-    <!-- ── Password ─────────────────────────────────────────────────────────── -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header"><i class="fas fa-lock me-2"></i>เปลี่ยนรหัสผ่าน</div>
-            <div class="card-body">
-                <form method="POST">
-                    <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
-                    <input type="hidden" name="action"     value="change_password">
-
-                    <div class="mb-3">
-                        <label class="form-label">รหัสผ่านปัจจุบัน <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control" name="current_password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">รหัสผ่านใหม่ <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control" name="new_password" required minlength="8">
-                        <small class="text-muted">อย่างน้อย 8 ตัวอักษร</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ยืนยันรหัสผ่านใหม่ <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control" name="confirm_password" required minlength="8">
-                    </div>
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-key me-2"></i>เปลี่ยนรหัสผ่าน
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- ── 2FA Section ──────────────────────────────────────────────────────────── -->
@@ -378,6 +348,35 @@ $user = db()->fetchOne("SELECT * FROM admin_users WHERE id = ?", [$userId]);
             </div>
         <?php endif; ?>
 
+    </div>
+</div>
+
+<!-- ── Change Password ──────────────────────────────────────────────────────── -->
+<div class="card mt-4">
+    <div class="card-header"><i class="fas fa-lock me-2"></i>เปลี่ยนรหัสผ่าน</div>
+    <div class="card-body">
+        <form method="POST" class="row g-3">
+            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
+            <input type="hidden" name="action"     value="change_password">
+            <div class="col-md-4">
+                <label class="form-label">รหัสผ่านปัจจุบัน <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" name="current_password" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">รหัสผ่านใหม่ <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" name="new_password" required minlength="8">
+                <small class="text-muted">อย่างน้อย 8 ตัวอักษร</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">ยืนยันรหัสผ่านใหม่ <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" name="confirm_password" required minlength="8">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-key me-2"></i>เปลี่ยนรหัสผ่าน
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

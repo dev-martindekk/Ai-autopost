@@ -236,6 +236,64 @@ $currentDays = is_array($v['posting_days']) ? $v['posting_days'] : explode(',', 
                 </div>
             </div>
 
+            <?php if ($isEdit): ?>
+            <!-- ลิงก์ขาออก -->
+            <div class="card mb-4" id="outbound-links">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-external-link-alt me-2 text-primary"></i>ลิงก์ขาออก (<?= count($outboundLinks) ?>)</span>
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addLinkModal">
+                        <i class="fas fa-plus me-1"></i>เพิ่มลิงก์
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($outboundLinks)): ?>
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-link fa-2x mb-2 d-block"></i>ยังไม่มีลิงก์ขาออก
+                    </div>
+                    <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr><th>Anchor Text</th><th>URL</th><th class="text-center" style="width:60px;">ใช้</th><th style="width:80px;"></th></tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($outboundLinks as $link): ?>
+                            <tr class="<?= !$link['is_active'] ? 'table-secondary' : '' ?>">
+                                <td class="align-middle">
+                                    <strong style="font-size:13px;"><?= sanitize($link['anchor_text']) ?></strong>
+                                    <?php if ($link['title']): ?><br><small class="text-muted"><?= sanitize($link['title']) ?></small><?php endif; ?>
+                                </td>
+                                <td class="align-middle">
+                                    <a href="<?= sanitize($link['url']) ?>" target="_blank" style="font-size:12px;">
+                                        <?= mb_strimwidth(sanitize($link['url']), 0, 40, '...') ?>
+                                        <i class="fas fa-external-link-alt fa-xs ms-1"></i>
+                                    </a>
+                                </td>
+                                <td class="text-center align-middle"><span class="badge bg-info"><?= $link['use_count'] ?? 0 ?></span></td>
+                                <td class="align-middle">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="linkAction('toggle_link', <?= $link['id'] ?>)"
+                                            title="เปิด/ปิด">
+                                        <i class="fas fa-toggle-<?= $link['is_active'] ? 'on text-success' : 'off' ?>"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="linkAction('delete_link', <?= $link['id'] ?>, true)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <div class="card-footer text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>AI สุ่มเลือก 1 ลิงก์/บทความ โดยเลือกลิงก์ที่ใช้น้อยที่สุดก่อน
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- WordPress Authentication -->
             <div class="card mb-4">
                 <div class="card-header"><i class="fab fa-wordpress me-2"></i>การยืนยันตัวตน WordPress</div>
@@ -530,68 +588,7 @@ document.getElementById('testConnectionBtn').addEventListener('click', function(
 </script>
 
 <?php if ($isEdit): ?>
-<div class="card mt-4" id="outbound-links">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-external-link-alt me-2 text-primary"></i>ลิงก์ขาออก (<?= count($outboundLinks) ?>)</span>
-        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addLinkModal">
-            <i class="fas fa-plus me-1"></i>เพิ่มลิงก์
-        </button>
-    </div>
-    <div class="card-body p-0">
-        <?php if (empty($outboundLinks)): ?>
-        <div class="text-center py-4 text-muted">
-            <i class="fas fa-link fa-2x mb-2 d-block"></i>
-            ยังไม่มีลิงก์ขาออก
-        </div>
-        <?php else: ?>
-        <div class="table-responsive">
-            <table class="table table-sm mb-0">
-                <thead class="table-light"><tr><th>Anchor Text</th><th>URL</th><th class="text-center" style="width:70px;">ใช้</th><th style="width:90px;"></th></tr></thead>
-                <tbody>
-                <?php foreach ($outboundLinks as $link): ?>
-                <tr class="<?= !$link['is_active'] ? 'table-secondary' : '' ?>">
-                    <td class="align-middle">
-                        <strong style="font-size:13px;"><?= sanitize($link['anchor_text']) ?></strong>
-                        <?php if ($link['title']): ?><br><small class="text-muted"><?= sanitize($link['title']) ?></small><?php endif; ?>
-                    </td>
-                    <td class="align-middle">
-                        <a href="<?= sanitize($link['url']) ?>" target="_blank" style="font-size:12px;">
-                            <?= mb_strimwidth(sanitize($link['url']), 0, 45, '...') ?>
-                            <i class="fas fa-external-link-alt fa-xs ms-1"></i>
-                        </a>
-                    </td>
-                    <td class="text-center align-middle"><span class="badge bg-info"><?= $link['use_count'] ?? 0 ?></span></td>
-                    <td class="align-middle">
-                        <form method="POST" class="d-inline">
-                            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
-                            <input type="hidden" name="action" value="toggle_link">
-                            <input type="hidden" name="site_id" value="<?= $siteId ?>">
-                            <input type="hidden" name="link_id" value="<?= $link['id'] ?>">
-                            <button class="btn btn-sm btn-outline-secondary" title="Toggle">
-                                <i class="fas fa-toggle-<?= $link['is_active'] ? 'on text-success' : 'off' ?>"></i>
-                            </button>
-                        </form>
-                        <form method="POST" class="d-inline" onsubmit="return confirm('ลบลิงก์นี้?')">
-                            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
-                            <input type="hidden" name="action" value="delete_link">
-                            <input type="hidden" name="site_id" value="<?= $siteId ?>">
-                            <input type="hidden" name="link_id" value="<?= $link['id'] ?>">
-                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php endif; ?>
-    </div>
-    <div class="card-footer text-muted small">
-        <i class="fas fa-info-circle me-1"></i>AI สุ่มเลือก 1 ลิงก์/บทความ โดยเลือกลิงก์ที่ใช้น้อยที่สุดก่อน
-    </div>
-</div>
-
-<!-- Add Link Modal -->
+<!-- Add Link Modal (standalone form — outside main form) -->
 <div class="modal fade" id="addLinkModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -627,5 +624,20 @@ document.getElementById('testConnectionBtn').addEventListener('click', function(
     </div>
 </div>
 <?php endif; ?>
+
+<script>
+function linkAction(action, linkId, confirmFirst) {
+    if (confirmFirst && !confirm('ลบลิงก์นี้?')) return;
+    const f = document.createElement('form');
+    f.method = 'POST';
+    [['csrf_token','<?= $csrfToken ?>'],['action',action],['site_id','<?= $siteId ?>'],['link_id',linkId]].forEach(([n,v])=>{
+        const i = document.createElement('input');
+        i.type='hidden'; i.name=n; i.value=v;
+        f.appendChild(i);
+    });
+    document.body.appendChild(f);
+    f.submit();
+}
+</script>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
