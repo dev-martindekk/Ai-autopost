@@ -382,21 +382,6 @@ $currentDays = is_array($v['posting_days']) ? $v['posting_days'] : explode(',', 
                 </div>
             </div>
 
-            <!-- Site Niche -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-bullseye me-2 text-primary"></i>คำอธิบาย Niche / กลุ่มเป้าหมาย
-                    <span class="badge bg-primary ms-2 small">AI ใช้ข้อมูลนี้</span>
-                </div>
-                <div class="card-body">
-                    <textarea name="site_niche" class="form-control" rows="4"
-                              placeholder="อธิบายว่าเว็บนี้เน้นเนื้อหาอะไร กลุ่มเป้าหมายคือใคร โทนการเขียนแบบไหน&#10;&#10;ตัวอย่าง: เว็บรีวิวผลิตภัณฑ์ดูแลผิวสำหรับผู้หญิงไทย อายุ 25-40 ปี เน้นสินค้าคุ้มค่า&#10;ตัวอย่าง: บล็อกสอนทำอาหาร เขียนเป็นกันเอง เน้นสูตรง่ายๆ ทำได้ที่บ้าน"><?= sanitize($v['site_niche'] ?? '') ?></textarea>
-                    <small class="text-muted mt-1 d-block">
-                        <i class="fas fa-robot me-1"></i>AI จะใช้ข้อมูลนี้ในการสร้างบทความและ keywords ให้ตรงกับเนื้อหาเว็บของคุณ
-                    </small>
-                </div>
-            </div>
-
         </div>
 
         <!-- Right column -->
@@ -459,6 +444,21 @@ $currentDays = is_array($v['posting_days']) ? $v['posting_days'] : explode(',', 
                 </div>
             </div>
             <?php endif; ?>
+
+            <!-- Site Niche -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <i class="fas fa-bullseye me-2 text-primary"></i>คำอธิบาย Niche / กลุ่มเป้าหมาย
+                    <span class="badge bg-primary ms-2 small">AI ใช้ข้อมูลนี้</span>
+                </div>
+                <div class="card-body">
+                    <textarea name="site_niche" class="form-control" rows="4"
+                              placeholder="อธิบายว่าเว็บนี้เน้นเนื้อหาอะไร กลุ่มเป้าหมายคือใคร โทนการเขียนแบบไหน&#10;&#10;ตัวอย่าง: เว็บรีวิวผลิตภัณฑ์ดูแลผิวสำหรับผู้หญิงไทย อายุ 25-40 ปี เน้นสินค้าคุ้มค่า&#10;ตัวอย่าง: บล็อกสอนทำอาหาร เขียนเป็นกันเอง เน้นสูตรง่ายๆ ทำได้ที่บ้าน"><?= sanitize($v['site_niche'] ?? '') ?></textarea>
+                    <small class="text-muted mt-1 d-block">
+                        <i class="fas fa-robot me-1"></i>AI จะใช้ข้อมูลนี้ในการสร้างบทความและ keywords ให้ตรงกับเนื้อหาเว็บของคุณ
+                    </small>
+                </div>
+            </div>
 
             <!-- หมายเหตุ -->
             <div class="card mt-3">
