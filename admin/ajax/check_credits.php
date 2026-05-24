@@ -25,7 +25,11 @@ if (empty($provider['api_key'])) {
 try {
     $apiKey = decrypt($provider['api_key']);
 } catch (Exception $e) {
-    jsonResponse(['success' => false, 'message' => 'ไม่สามารถถอดรหัส API Key']);
+    jsonResponse(['success' => false, 'message' => 'ไม่สามารถถอดรหัส API Key: ' . $e->getMessage()]);
+}
+
+if (empty(trim($apiKey))) {
+    jsonResponse(['success' => false, 'message' => 'API Key ถอดรหัสได้ค่าว่าง — กรุณาบันทึก API Key ใหม่อีกครั้งในหน้า AI Settings']);
 }
 
 $name = $provider['provider_name'];
