@@ -135,6 +135,7 @@ $counts = array_column($statusCounts, 'cnt', 'status');
     </div>
 </div>
 
+<?php $pageScripts = <<<'PAGESCRIPT'
 <script>
 $(document).ready(function() {
     $('#artTable').DataTable({
@@ -145,5 +146,6 @@ $(document).ready(function() {
     });
 });
 </script>
+PAGESCRIPT; ?>
 
 <?php require_once __DIR__ . '/footer.php'; ?>

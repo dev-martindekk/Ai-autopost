@@ -109,6 +109,7 @@ $countMap = array_column($counts, 'cnt', 'status');
     </div>
 </div>
 
+<?php $pageScripts = <<<'PAGESCRIPT'
 <script>
 $(document).ready(function() {
     $('#slipsTable').DataTable({
@@ -119,5 +120,6 @@ $(document).ready(function() {
     });
 });
 </script>
+PAGESCRIPT; ?>
 
 <?php require_once __DIR__ . '/footer.php'; ?>

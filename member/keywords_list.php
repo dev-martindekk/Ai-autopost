@@ -443,6 +443,7 @@ $flash = getFlash();
     </div>
 </div>
 
+<?php $pageScripts = <<<'PAGESCRIPT'
 <script>
 $(document).ready(function() {
     if ($('#kwTable tbody tr').length > 0) {
@@ -464,5 +465,6 @@ $(document).ready(function() {
     }
 });
 </script>
+PAGESCRIPT; ?>
 
 <?php require_once __DIR__ . '/footer.php'; ?>

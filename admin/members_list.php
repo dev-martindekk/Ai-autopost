@@ -453,6 +453,7 @@ $flash = getFlash();
     </div>
 </div>
 
+<?php ob_start(); ?>
 <script>
 $(document).ready(function() {
     $('#membersTable').DataTable({
@@ -494,10 +495,6 @@ $(document).ready(function() {
         });
     });
 
-    // Re-open modal on validation error
-
-
-    // Re-open modal on validation error
     <?php if (!empty($createErrors)): ?>
     new bootstrap.Modal(document.getElementById('createMemberModal')).show();
     <?php endif; ?>
@@ -525,5 +522,6 @@ function togglePwd() {
     else { f.type = 'password'; i.className = 'fas fa-eye'; }
 }
 </script>
+<?php $pageScripts = ob_get_clean(); ?>
 
 <?php require_once __DIR__ . '/footer.php'; ?>

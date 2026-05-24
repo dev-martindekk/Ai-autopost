@@ -125,4 +125,44 @@ DROP PROCEDURE IF EXISTS migrate_telegram;
 ALTER TABLE `admin_users`
     MODIFY COLUMN `role` ENUM('super_admin','admin','staff','editor') DEFAULT 'admin';
 
+-- ============================================================
+-- 6. article_keywords (keyword deduplication tracking)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `article_keywords` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `article_id` INT UNSIGNED NOT NULL,
+    `site_id` INT UNSIGNED NOT NULL,
+    `keyword` VARCHAR(255) NOT NULL,
+    `keyword_type` ENUM('primary','secondary','long_tail','lsi') DEFAULT 'primary',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_site_keyword` (`site_id`, `keyword`(100)),
+    INDEX `idx_article` (`article_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 7. job_queue (async job processing)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `job_queue` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `job_type` VARCHAR(50) NOT NULL,
+    `payload` JSON NOT NULL,
+    `priority` TINYINT UNSIGNED DEFAULT 5 COMMENT '1=highest 10=lowest',
+    `site_id` INT UNSIGNED DEFAULT NULL,
+    `status` ENUM('pending','processing','completed','failed','cancelled') DEFAULT 'pending',
+    `attempts` INT DEFAULT 0,
+    `max_retries` INT DEFAULT 3,
+    `worker_id` VARCHAR(50) DEFAULT NULL,
+    `result` JSON DEFAULT NULL,
+    `error_message` TEXT DEFAULT NULL,
+    `scheduled_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `started_at` DATETIME DEFAULT NULL,
+    `completed_at` DATETIME DEFAULT NULL,
+    `locked_until` DATETIME DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_status_scheduled` (`status`, `scheduled_at`),
+    INDEX `idx_site` (`site_id`),
+    INDEX `idx_job_type` (`job_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SELECT 'Missing tables migration completed.' AS result;

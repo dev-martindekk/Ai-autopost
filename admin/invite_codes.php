@@ -197,6 +197,7 @@ $codes = db()->fetchAll(
     </div>
 </div>
 
+<?php $pageScripts = <<<'PAGESCRIPT'
 <script>
 $(document).ready(function() {
     $('#codesTable').DataTable({
@@ -209,5 +210,6 @@ $(document).ready(function() {
     });
 });
 </script>
+PAGESCRIPT; ?>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
