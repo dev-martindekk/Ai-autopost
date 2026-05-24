@@ -6,6 +6,8 @@
 require_once __DIR__ . '/../includes/member_auth.php';
 require_once __DIR__ . '/../includes/plan_manager.php';
 
+header('Content-Type: text/html; charset=UTF-8');
+
 memberAuth()->requireAuth();
 
 $currentMember = memberAuth()->getMember();

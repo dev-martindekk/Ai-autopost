@@ -237,6 +237,35 @@ $displayLinks = $curLinks ?? $sysLinks;
         <form method="POST">
             <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
             <input type="hidden" name="action" value="save_word_settings">
+
+            <!-- Presets -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold" style="font-size:13px;">เลือกแบบสำเร็จรูป</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary seo-preset"
+                            data-min="500" data-max="800" data-links="1">
+                        <i class="fas fa-feather me-1"></i>สั้นมาก<br><small class="text-muted">500–800 คำ</small>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info seo-preset"
+                            data-min="800" data-max="1200" data-links="2">
+                        <i class="fas fa-align-left me-1"></i>สั้น<br><small class="text-muted">800–1,200 คำ</small>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary seo-preset"
+                            data-min="1500" data-max="2500" data-links="3">
+                        <i class="fas fa-align-justify me-1"></i>กลาง <span class="badge bg-primary ms-1" style="font-size:9px;">แนะนำ</span><br><small class="text-muted">1,500–2,500 คำ</small>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success seo-preset"
+                            data-min="2500" data-max="4000" data-links="5">
+                        <i class="fas fa-file-alt me-1"></i>ยาว<br><small class="text-muted">2,500–4,000 คำ</small>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning seo-preset"
+                            data-min="4000" data-max="6000" data-links="7">
+                        <i class="fas fa-book me-1"></i>ยาวมาก<br><small class="text-muted">4,000–6,000 คำ</small>
+                    </button>
+                </div>
+            </div>
+            <hr class="my-3">
+
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">จำนวนคำขั้นต่ำ</label>
@@ -414,6 +443,17 @@ $displayLinks = $curLinks ?? $sysLinks;
 
 <script>
 const promptDefaults = <?= json_encode($jsDefaults, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+
+// SEO Preset buttons
+document.querySelectorAll('.seo-preset').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelector('[name="min_words"]').value = this.dataset.min;
+        document.querySelector('[name="max_words"]').value = this.dataset.max;
+        document.querySelector('[name="internal_links"]').value = this.dataset.links;
+        document.querySelectorAll('.seo-preset').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
 
 function insertVar(taId, v) {
     const ta = document.getElementById(taId);

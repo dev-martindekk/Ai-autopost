@@ -35,6 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/member/keywords_list.php');
     }
 
+    // Delete all
+    if ($action === 'delete_all') {
+        db()->query("UPDATE keywords SET is_active=0 WHERE owner_type='member' AND owner_id=?", [$memberId]);
+        setFlash('success', 'ลบ keywords ทั้งหมดแล้ว');
+        redirect('/member/keywords_list.php');
+    }
+
     // Bulk delete
     if ($action === 'bulk_delete' && !empty($_POST['selected'])) {
         $ids = array_map('intval', (array)$_POST['selected']);
@@ -212,6 +219,15 @@ $flash = getFlash();
         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importCsvModal">
             <i class="fas fa-file-import me-2"></i>Import Ahrefs CSV
         </button>
+        <?php if ($currentCount > 0): ?>
+        <form method="POST" onsubmit="return confirm('ลบ keywords ทั้งหมด <?= $currentCount ?> รายการ?\nไม่สามารถกู้คืนได้')">
+            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
+            <input type="hidden" name="action" value="delete_all">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="fas fa-trash me-2"></i>ลบทั้งหมด
+            </button>
+        </form>
+        <?php endif; ?>
     </div>
 </div>
 

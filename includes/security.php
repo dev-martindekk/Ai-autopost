@@ -362,7 +362,7 @@ class SecurityManager {
             "SELECT ib.*, au.username as banned_by_name
              FROM ip_bans ib
              LEFT JOIN admin_users au ON au.id = ib.banned_by
-             ORDER BY ib.created_at DESC"
+             ORDER BY ib.banned_at DESC"
         );
     }
 

@@ -203,7 +203,13 @@ $(document).ready(function() {
     $('#codesTable').DataTable({
         order: [[0,'asc']],
         pageLength: 25,
-        columnDefs: [{ orderable: false, targets: [7] }]
+        columnDefs: [{ orderable: false, targets: [7] }],
+        language: {
+            search: "ค้นหา:", lengthMenu: "แสดง _MENU_ รายการ",
+            info: "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+            infoEmpty: "ไม่มีข้อมูล", zeroRecords: "ไม่พบข้อมูล",
+            paginate: { first:"แรก", last:"สุดท้าย", next:"ถัดไป", previous:"ก่อนหน้า" }
+        }
     });
     $('input[name="custom_code"]').on('input', function() {
         this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');

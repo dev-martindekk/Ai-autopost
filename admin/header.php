@@ -7,6 +7,8 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 
+header('Content-Type: text/html; charset=UTF-8');
+
 // Require authentication
 auth()->requireAuth();
 
