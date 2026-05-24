@@ -1,0 +1,50 @@
+FROM php:8.2-apache
+
+RUN apt-get update && apt-get install -y \
+    libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
+    zip unzip curl cron \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd mysqli pdo pdo_mysql zip
+
+# Enable Apache modules: rewrite + headers + SSL
+RUN a2enmod rewrite headers ssl
+
+# PHP production settings
+RUN echo "display_errors = Off" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "log_errors = On" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "error_log = /var/www/html/logs/php_errors.log" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "date.timezone = Asia/Bangkok" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "upload_max_filesize = 50M" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "post_max_size = 50M" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "max_execution_time = 120" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "session.gc_maxlifetime = 604800" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "session.gc_probability = 1" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "session.gc_divisor = 100" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "expose_php = Off" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.enable = 1" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.memory_consumption = 128" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.max_accelerated_files = 4000" >> /usr/local/etc/php/conf.d/custom.ini
+
+# Apache VirtualHost: HTTP redirect → HTTPS + HTTPS with SSL
+COPY ./config/apache-prod.conf /etc/apache2/sites-available/000-default.conf
+RUN a2ensite 000-default
+
+RUN echo '<Directory /var/www/html>\n\
+    Options -Indexes +FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' > /etc/apache2/conf-available/custom.conf \
+    && a2enconf custom
+
+COPY ./config/crontab /etc/cron.d/seo-cron
+RUN chmod 0644 /etc/cron.d/seo-cron
+
+WORKDIR /var/www/html
+
+RUN mkdir -p /var/www/html/logs /var/www/html/uploads/slips /var/www/html/uploads/payment \
+    && chown -R www-data:www-data /var/www/html
+
+CMD service cron start && apache2-foreground

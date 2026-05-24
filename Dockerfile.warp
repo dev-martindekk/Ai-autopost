@@ -1,0 +1,34 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    lsb-release \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Cloudflare WARP repository
+RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ jammy main" \
+    > /etc/apt/sources.list.d/cloudflare-client.list
+
+# Install Cloudflare WARP + gost (SOCKS5 proxy forwarder)
+RUN apt-get update && apt-get install -y cloudflare-warp wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install gost v3 for SOCKS5 forwarding (forwards 0.0.0.0:1080 -> WARP's 127.0.0.1:40000)
+RUN wget -qO /tmp/gost.tar.gz https://github.com/go-gost/gost/releases/download/v3.0.0-rc10/gost_3.0.0-rc10_linux_amd64.tar.gz \
+    && tar -xzf /tmp/gost.tar.gz -C /usr/local/bin/ gost \
+    && chmod +x /usr/local/bin/gost \
+    && rm /tmp/gost.tar.gz
+
+# Copy entrypoint
+COPY config/warp-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 1080
+
+ENTRYPOINT ["/entrypoint.sh"]

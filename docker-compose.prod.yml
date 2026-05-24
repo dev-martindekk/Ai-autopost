@@ -1,0 +1,92 @@
+# AI AutoPost SEO — PRODUCTION docker-compose
+# Usage: docker-compose -f docker-compose.prod.yml up -d
+# Prerequisites:
+#   1. Copy .env.example → .env and fill all values
+#   2. Place SSL cert + key at ./config/ssl/fullchain.pem + privkey.pem
+#      (e.g. from Let's Encrypt: certbot certonly --standalone -d yourdomain.com)
+#   3. Set BASE_URL=https://yourdomain.com in .env
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: ai-autopost-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - .:/var/www/html
+      - ./logs:/var/www/html/logs
+      - ./config/ssl:/etc/ssl/app:ro
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - BASE_URL=${BASE_URL}
+      - APP_ENV=production
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - TZ=${TZ:-Asia/Bangkok}
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - seo-network
+
+  db:
+    image: mysql:8.0
+    container_name: ai-autopost-db
+    restart: unless-stopped
+    command: --default-time-zone='+07:00' --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=300 --innodb-buffer-pool-size=512M
+    ports:
+      - "127.0.0.1:3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      TZ: ${TZ:-Asia/Bangkok}
+    volumes:
+      - seo_mysql_data:/var/lib/mysql
+      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - seo-network
+
+  warp-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.warp
+    container_name: ai-autopost-warp
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - warp_data:/var/lib/cloudflare-warp
+    environment:
+      - TZ=${TZ:-Asia/Bangkok}
+    networks:
+      - seo-network
+
+networks:
+  seo-network:
+    driver: bridge
+
+volumes:
+  seo_mysql_data:
+  warp_data:

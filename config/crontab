@@ -1,0 +1,35 @@
+# AI AutoPost SEO Cron Jobs
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Daily reset at midnight (Thai time) - reset article counters for new day
+0 0 * * * www-data /usr/local/bin/php /var/www/html/jobs/job_daily_reset.php >> /var/www/html/logs/cron_daily_reset.log 2>&1
+
+# Daily health check at midnight - check all service connections (DB, AI, WordPress, Telegram)
+5 0 * * * www-data /usr/local/bin/php /var/www/html/jobs/job_health_check.php >> /var/www/html/logs/cron_health_check.log 2>&1
+
+# Generate and post articles every hour (schedule per site settings)
+0 * * * * www-data /usr/local/bin/php /var/www/html/jobs/job_generate_articles.php >> /var/www/html/logs/cron_articles.log 2>&1
+
+# Process job queue every 2 minutes
+*/2 * * * * www-data /usr/local/bin/php /var/www/html/jobs/job_queue_processor.php >> /var/www/html/logs/cron_queue.log 2>&1
+
+# Create internal links every 4 hours
+0 */4 * * * www-data /usr/local/bin/php /var/www/html/jobs/job_internal_links.php >> /var/www/html/logs/cron_links.log 2>&1
+
+
+# AI Content Planner - Weekly content planning on Monday 6:00 AM
+0 6 * * 1 www-data /usr/local/bin/php /var/www/html/jobs/job_content_planner.php >> /var/www/html/logs/cron_content_planner.log 2>&1
+
+# Send weekly report every Sunday at 9am
+0 9 * * 0 www-data /usr/local/bin/php /var/www/html/jobs/job_weekly_report.php >> /var/www/html/logs/cron_report.log 2>&1
+
+# Refresh AI models list every 6 hours (detect new models)
+0 0,6,12,18 * * * www-data /usr/local/bin/php /var/www/html/jobs/refresh_all_models.php >> /var/www/html/logs/cron_models.log 2>&1
+
+# Sync WordPress posts every day at 2am (for internal linking)
+0 2 * * * www-data /usr/local/bin/php /var/www/html/jobs/job_sync_wp_posts.php >> /var/www/html/logs/cron_sync_wp.log 2>&1
+
+# Clean old logs every day at 1am
+0 1 * * * www-data /usr/local/bin/php /var/www/html/jobs/job_cleanup.php >> /var/www/html/logs/cron_cleanup.log 2>&1
+

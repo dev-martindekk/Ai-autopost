@@ -1,0 +1,35 @@
+# Logs
+logs/*.log
+logs/*.txt
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude Code local settings
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSL certificates (never commit private keys)
+config/ssl/*.pem
+config/ssl/*.key
+config/ssl/*.crt
+config/ssl/*.p12
+
+# Temp files
+*.tmp
+*.temp

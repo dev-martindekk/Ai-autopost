@@ -1,0 +1,111 @@
+# LOCAL DEVELOPMENT docker-compose
+# Secrets are loaded from .env file (see .env.example)
+# Copy: cp .env.example .env.dev && fill in values
+# Run:  docker compose --env-file .env.dev up -d
+
+services:
+  # PHP + Apache
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-autopost-web
+    restart: unless-stopped
+    ports:
+      - "3003:80"
+    volumes:
+      - .:/var/www/html
+      - ./logs:/var/www/html/logs
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-ai_autopost_seo}
+      - DB_USER=${DB_USER:-seouser}
+      - DB_PASS=${DB_PASS}
+      - BASE_URL=${BASE_URL:-http://localhost:3003}
+      - APP_ENV=${APP_ENV:-development}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - TZ=Asia/Bangkok
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - seo-network
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: ai-autopost-db
+    restart: unless-stopped
+    command: --default-time-zone='+07:00' --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=300 --innodb-buffer-pool-size=256M
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-ai_autopost_seo}
+      MYSQL_USER: ${DB_USER:-seouser}
+      MYSQL_PASSWORD: ${DB_PASS}
+      TZ: Asia/Bangkok
+    volumes:
+      - seo_mysql_data:/var/lib/mysql
+      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - seo-network
+
+  # Cloudflare WARP SOCKS5 Proxy (bypass MDES DNS blocking)
+  warp-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.warp
+    container_name: ai-autopost-warp
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - warp_data:/var/lib/cloudflare-warp
+    environment:
+      - TZ=Asia/Bangkok
+    healthcheck:
+      test: ["CMD", "warp-cli", "--accept-tos", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - seo-network
+
+  # phpMyAdmin (development only — do NOT expose in production)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: ai-autopost-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - seo-network
+
+networks:
+  seo-network:
+    driver: bridge
+
+volumes:
+  seo_mysql_data:
+  warp_data:
