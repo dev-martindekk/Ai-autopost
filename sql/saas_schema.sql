@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS `plans` (
     `max_tokens_per_month` INT DEFAULT 0 COMMENT '0 = unlimited',
     `features` JSON DEFAULT NULL COMMENT 'array of feature keys',
     `is_active` TINYINT(1) DEFAULT 1,
+    `is_trial` TINYINT(1) NOT NULL DEFAULT 0,
+    `trial_articles_total` INT NOT NULL DEFAULT 0 COMMENT 'total articles allowed for trial (0 = use monthly quota)',
     `sort_order` INT DEFAULT 10,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -153,10 +155,11 @@ ALTER TABLE `admin_users`
 -- ============================================================
 -- SEED: Default plans
 -- ============================================================
-INSERT IGNORE INTO `plans` (`name`, `slug`, `description`, `price`, `articles_per_month`, `max_sites`, `max_keywords`, `sort_order`) VALUES
-('Starter', 'starter', 'เหมาะสำหรับเว็บไซต์เริ่มต้น', 499.00, 30, 1, 200, 1),
-('Pro', 'pro', 'เหมาะสำหรับนักการตลาดมืออาชีพ', 1499.00, 100, 3, 1000, 2),
-('Agency', 'agency', 'เหมาะสำหรับเอเจนซี่', 3999.00, 0, 10, 0, 3);
+INSERT IGNORE INTO `plans` (`name`, `slug`, `description`, `price`, `articles_per_month`, `max_sites`, `max_keywords`, `is_trial`, `trial_articles_total`, `sort_order`) VALUES
+('Starter', 'starter', 'เหมาะสำหรับเว็บไซต์เริ่มต้น', 499.00, 30, 1, 200, 0, 0, 1),
+('Pro', 'pro', 'เหมาะสำหรับนักการตลาดมืออาชีพ', 1499.00, 100, 3, 1000, 0, 0, 2),
+('Agency', 'agency', 'เหมาะสำหรับเอเจนซี่', 3999.00, 0, 10, 0, 0, 0, 3),
+('Trial', 'trial', 'ทดลองใช้ฟรี', 0.00, 0, 1, 50, 1, 5, 0);
 
 SET foreign_key_checks = 1;
 

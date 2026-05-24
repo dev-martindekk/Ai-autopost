@@ -286,8 +286,14 @@ function jsonResponse(array $data, int $statusCode = 200): void {
 function getClientIP(): string {
     $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
 
-    // Only trust forwarded headers from known private/proxy networks
-    // (Docker internal, Cloudflare, localhost)
+    // Cloudflare always sends CF-Connecting-IP with the real visitor IP.
+    // Trust it unconditionally — Cloudflare strips spoofed headers before forwarding.
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        $ip = trim(explode(',', $_SERVER['HTTP_CF_CONNECTING_IP'])[0]);
+        if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
+    }
+
+    // Standard reverse proxy / Docker internal network
     $trustedProxies = ['127.0.0.1', '::1', '172.', '10.', '192.168.'];
     $isTrustedProxy = false;
     foreach ($trustedProxies as $prefix) {
@@ -297,22 +303,13 @@ function getClientIP(): string {
         }
     }
 
-    if ($isTrustedProxy) {
-        // Check Cloudflare header first (most specific)
-        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-            $ip = trim(explode(',', $_SERVER['HTTP_CF_CONNECTING_IP'])[0]);
-            if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
-        }
-        // Then X-Forwarded-For (standard reverse proxy)
-        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                return $ip;
-            }
+    if ($isTrustedProxy && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ip = trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return $ip;
         }
     }
 
-    // Fall back to direct connection IP (always trusted)
     return filter_var($remoteAddr, FILTER_VALIDATE_IP) ? $remoteAddr : 'unknown';
 }
 
