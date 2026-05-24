@@ -3,8 +3,8 @@
 
 -- Table to store article performance data (from GSC)
 CREATE TABLE IF NOT EXISTS article_performance (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    article_id INT NOT NULL,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    article_id INT UNSIGNED NOT NULL,
     impressions INT DEFAULT 0,
     clicks INT DEFAULT 0,
     ctr DECIMAL(5,2) DEFAULT 0.00,
@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS article_performance (
 
 -- Table to store historical performance data
 CREATE TABLE IF NOT EXISTS article_performance_history (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    article_id INT NOT NULL,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    article_id INT UNSIGNED NOT NULL,
     date DATE NOT NULL,
     impressions INT DEFAULT 0,
     clicks INT DEFAULT 0,
@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS article_performance_history (
 
 -- Table to track CTR optimizations
 CREATE TABLE IF NOT EXISTS ctr_optimizations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    article_id INT NOT NULL,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    article_id INT UNSIGNED NOT NULL,
     old_title VARCHAR(255),
     new_title VARCHAR(255),
     old_description TEXT,
@@ -52,8 +52,8 @@ CREATE TABLE IF NOT EXISTS ctr_optimizations (
 
 -- Table for GSC integration
 CREATE TABLE IF NOT EXISTS gsc_credentials (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    site_id INT NOT NULL,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    site_id INT UNSIGNED NOT NULL,
     property_url VARCHAR(255) NOT NULL,
     client_id VARCHAR(255),
     client_secret TEXT,
@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS gsc_credentials (
 
 -- Table for keyword opportunities from GSC
 CREATE TABLE IF NOT EXISTS gsc_keyword_opportunities (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    site_id INT NOT NULL,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    site_id INT UNSIGNED NOT NULL,
     keyword VARCHAR(255) NOT NULL,
     impressions INT DEFAULT 0,
     clicks INT DEFAULT 0,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS gsc_keyword_opportunities (
     avg_position DECIMAL(5,2) DEFAULT 0.00,
     opportunity_type ENUM('new_content', 'improve_existing', 'quick_win', 'long_term') DEFAULT 'new_content',
     has_article TINYINT(1) DEFAULT 0,
-    article_id INT NULL,
+    article_id INT UNSIGNED NULL,
     priority_score INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
