@@ -448,7 +448,7 @@ $flash = getFlash();
 $(document).ready(function() {
     if ($('#kwTable tbody tr').length > 0) {
         $('#kwTable').DataTable({
-            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/th.json' },
+            language: { emptyTable:"ไม่มีข้อมูล", info:"แสดง _START_-_END_ จาก _TOTAL_ รายการ", infoEmpty:"0 รายการ", infoFiltered:"(กรอง _MAX_)", lengthMenu:"แสดง _MENU_", loadingRecords:"กำลังโหลด...", processing:"กำลังดำเนินการ...", search:"ค้นหา:", zeroRecords:"ไม่พบข้อมูล", paginate:{first:"หน้าแรก",last:"หน้าสุดท้าย",next:"ถัดไป",previous:"ก่อนหน้า"} },
             order: [[6,'desc']],
             pageLength: 25,
             columnDefs: [{ orderable: false, targets: [0,8] }]
