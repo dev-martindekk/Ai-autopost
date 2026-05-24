@@ -34,6 +34,8 @@ if ($name === 'openrouter') {
     $headers = [
         'Authorization: Bearer ' . $apiKey,
         'Content-Type: application/json',
+        'HTTP-Referer: ' . (defined('BASE_URL') ? BASE_URL : 'https://aiautopostseo.com'),
+        'X-Title: AI AutoPost SEO',
     ];
 
     // ดึงข้อมูล key (usage + limit)
@@ -48,7 +50,8 @@ if ($name === 'openrouter') {
     curl_close($ch);
 
     if ($httpCode !== 200 || !$body) {
-        jsonResponse(['success' => false, 'message' => 'OpenRouter ตอบกลับ HTTP ' . $httpCode]);
+        $errDetail = $body ? (json_decode($body, true)['error']['message'] ?? $body) : '';
+        jsonResponse(['success' => false, 'message' => 'OpenRouter ตอบกลับ HTTP ' . $httpCode . ($errDetail ? ': ' . $errDetail : '')]);
     }
 
     $data = json_decode($body, true)['data'] ?? null;
