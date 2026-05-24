@@ -57,12 +57,15 @@ for sqlfile in "$SQL_DIR"/*.sql; do
     fi
 
     echo -e "   ${YELLOW}▶  $filename${NC}"
-    if docker exec -i "$DB_CONTAINER" mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$sqlfile" 2>&1 | grep -v "Warning: Using a password"; then
+    output=$(docker exec -i "$DB_CONTAINER" mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$sqlfile" 2>&1)
+    exit_code=$?
+    echo "$output" | grep -v "Warning: Using a password" || true
+    if [ $exit_code -eq 0 ]; then
         mysql_cmd -e "INSERT IGNORE INTO \`migrations\` (filename) VALUES ('$filename');" 2>/dev/null
         echo -e "   ${GREEN}✓  $filename applied${NC}"
         ((applied++)) || true
     else
-        echo -e "   ${RED}✗  $filename FAILED${NC}"
+        echo -e "   ${RED}✗  $filename FAILED (exit $exit_code)${NC}"
         ((failed++)) || true
     fi
 done
