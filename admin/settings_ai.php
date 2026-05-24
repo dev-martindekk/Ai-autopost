@@ -568,14 +568,28 @@ $(\'.check-credits-btn\').click(function() {
             creditBox.find(\'.credit-remaining\').removeClass(\'text-danger\').addClass(\'text-success\');
 
             if (providerName === \'openrouter\') {
-                const remaining = res.remaining !== null ? \'$\' + res.remaining.toFixed(4) : \'ไม่จำกัด\';
-                const limit     = res.limit     !== null ? \'$\' + res.limit.toFixed(2) : \'ไม่จำกัด\';
-                const usage     = \'$\' + res.usage.toFixed(4);
-                creditBox.find(\'.credit-remaining\').text(remaining);
-                let details = \'ใช้ไปแล้ว: \' + usage + \' / วงเงิน: \' + limit;
-                if (res.is_free_tier) details += \' (Free Tier)\';
-                if (res.label)       details += \' · \' + res.label;
-                if (res.rate_limit)  details += \' · \' + (res.rate_limit.requests || \'?\') + \' req/\' + (res.rate_limit.interval || \'?\');
+                const usage = \'$\' + parseFloat(res.usage).toFixed(4);
+                let remainingText, details;
+
+                if (res.remaining !== null) {
+                    remainingText = \'$\' + parseFloat(res.remaining).toFixed(4);
+                    if (res.is_prepaid) {
+                        details = \'ยอดคงเหลือ (Prepaid) · ใช้ไปแล้ว: \' + usage;
+                    } else {
+                        const limit = \'$\' + parseFloat(res.limit).toFixed(2);
+                        details = \'ใช้ไปแล้ว: \' + usage + \' / วงเงิน: \' + limit;
+                    }
+                } else {
+                    remainingText = \'ดูที่ openrouter.ai\';
+                    details = \'ใช้ไปแล้ว: \' + usage + (res.is_free_tier ? \' (Free Tier)\' : \' (Prepaid — ดึงยอดไม่ได้)\');
+                    creditBox.find(\'.credit-remaining\').css(\'font-size\', \'13px\');
+                }
+
+                if (res.is_free_tier) details += \' · Free Tier\';
+                if (res.label)        details += \' · \' + res.label;
+                if (res.rate_limit)   details += \' · \' + (res.rate_limit.requests || \'?\') + \' req/\' + (res.rate_limit.interval || \'?\');
+
+                creditBox.find(\'.credit-remaining\').text(remainingText);
                 creditBox.find(\'.credit-details\').text(details);
             } else if (providerName === \'openai\') {
                 const remaining = res.remaining !== null ? \'$\' + res.remaining.toFixed(2) : \'ไม่ทราบ\';

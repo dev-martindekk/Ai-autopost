@@ -31,13 +31,19 @@ try {
 $name = $provider['provider_name'];
 
 if ($name === 'openrouter') {
+    $headers = [
+        'Authorization: Bearer ' . $apiKey,
+        'Content-Type: application/json',
+    ];
+
+    // ดึงข้อมูล key (usage + limit)
     $ch = curl_init('https://openrouter.ai/api/v1/auth/key');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $apiKey],
+        CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_TIMEOUT        => 10,
     ]);
-    $body = curl_exec($ch);
+    $body     = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
@@ -50,19 +56,48 @@ if ($name === 'openrouter') {
         jsonResponse(['success' => false, 'message' => 'ไม่สามารถอ่านข้อมูลจาก OpenRouter']);
     }
 
-    $usage  = (float)($data['usage']  ?? 0);
-    $limit  = isset($data['limit']) && $data['limit'] !== null ? (float)$data['limit'] : null;
-    $remaining = $limit !== null ? max(0, $limit - $usage) : null;
+    $usage     = (float)($data['usage'] ?? 0);
+    $limit     = isset($data['limit']) && $data['limit'] !== null ? (float)$data['limit'] : null;
+    $isFree    = (bool)($data['is_free_tier'] ?? false);
+
+    // สำหรับบัญชี Prepaid (limit = null) ดึงยอดเงินจาก /credits
+    $balance   = null;
+    $remaining = null;
+    if ($limit !== null) {
+        $remaining = max(0, $limit - $usage);
+    } else {
+        $ch2 = curl_init('https://openrouter.ai/api/v1/credits');
+        curl_setopt_array($ch2, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_TIMEOUT        => 10,
+        ]);
+        $body2     = curl_exec($ch2);
+        $httpCode2 = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+        curl_close($ch2);
+
+        if ($httpCode2 === 200 && $body2) {
+            $credits = json_decode($body2, true)['data'] ?? null;
+            if ($credits !== null) {
+                // total_credits = เครดิตที่เติมไป, total_usage = ใช้ไปแล้ว
+                $totalCredits = (float)($credits['total_credits'] ?? 0);
+                $totalUsage   = (float)($credits['total_usage']   ?? $usage);
+                $balance      = max(0, $totalCredits - $totalUsage);
+                $remaining    = $balance;
+            }
+        }
+    }
 
     jsonResponse([
-        'success'       => true,
-        'provider'      => 'openrouter',
-        'usage'         => round($usage, 4),
-        'limit'         => $limit !== null ? round($limit, 2) : null,
-        'remaining'     => $remaining !== null ? round($remaining, 4) : null,
-        'is_free_tier'  => (bool)($data['is_free_tier'] ?? false),
-        'label'         => $data['label'] ?? '',
-        'rate_limit'    => $data['rate_limit'] ?? null,
+        'success'      => true,
+        'provider'     => 'openrouter',
+        'usage'        => round($usage, 6),
+        'limit'        => $limit !== null ? round($limit, 2) : null,
+        'remaining'    => $remaining !== null ? round($remaining, 6) : null,
+        'is_free_tier' => $isFree,
+        'is_prepaid'   => $limit === null && !$isFree,
+        'label'        => $data['label'] ?? '',
+        'rate_limit'   => $data['rate_limit'] ?? null,
     ]);
 
 } elseif ($name === 'openai') {
