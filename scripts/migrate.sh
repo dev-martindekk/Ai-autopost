@@ -36,6 +36,22 @@ CREATE TABLE IF NOT EXISTS \`migrations\` (
     \`applied_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;" 2>/dev/null || true
 
+# Production อาจมี migrations table เก่าที่ใช้ column ชื่อ migration_name แทน filename
+# ถ้าเป็นแบบนั้นให้เพิ่ม filename column และ copy ข้อมูลมา
+mysql_cmd -e "
+SET @has_mn = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='migrations' AND COLUMN_NAME='migration_name');
+SET @has_fn = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='migrations' AND COLUMN_NAME='filename');
+SET @q = IF(@has_mn > 0 AND @has_fn = 0,
+    'ALTER TABLE \`migrations\` ADD COLUMN \`filename\` VARCHAR(255) DEFAULT NULL',
+    'SELECT 1');
+PREPARE st FROM @q; EXECUTE st; DEALLOCATE PREPARE st;
+
+SET @q2 = IF(@has_mn > 0 AND @has_fn = 0,
+    'UPDATE \`migrations\` SET \`filename\` = \`migration_name\` WHERE \`filename\` IS NULL',
+    'SELECT 1');
+PREPARE st FROM @q2; EXECUTE st; DEALLOCATE PREPARE st;
+" 2>/dev/null || true
+
 echo -e "${YELLOW}🗄  Checking migrations...${NC}"
 
 applied=0
