@@ -4,8 +4,9 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/plan_manager.php';
 
-// Load paid plans for pricing section
+// Load paid plans for pricing section — sorted by price ASC
 $plans = array_filter(planManager()->getAllActivePlans(), fn($p) => empty($p['is_trial']));
+usort($plans, fn($a, $b) => $a['price'] <=> $b['price']);
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -567,13 +568,13 @@ $plans = array_filter(planManager()->getAllActivePlans(), fn($p) => empty($p['is
             <!-- Feature 9 -->
             <div class="col-md-6 col-lg-4">
                 <div class="feature-card">
-                    <div class="feature-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.15));">
-                        <i class="fas fa-dice" style="color:#F59E0B;"></i>
+                    <div class="feature-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(99,102,241,.15));">
+                        <i class="fas fa-chart-line" style="color:#10B981;"></i>
                     </div>
-                    <h3 class="feature-title">รองรับเนื้อหาพนัน/iGaming</h3>
-                    <p class="feature-desc">มี Prompt Template เฉพาะสำหรับเนื้อหาคาสิโนออนไลน์และ Slot Games ปรับ Tone และสไตล์การเขียนให้เหมาะสมกับกลุ่มผู้อ่าน</p>
+                    <h3 class="feature-title">Multi-Site รองรับหลายเว็บ</h3>
+                    <p class="feature-desc">จัดการหลายเว็บไซต์ WordPress ในระบบเดียว ตั้งค่า Schedule, Keyword, Prompt แยกต่างหากต่อเว็บ รองรับธุรกิจที่ต้องการ Content ปริมาณสูง</p>
                     <div class="mt-3 d-flex gap-2 flex-wrap">
-                        <span class="tag" style="background:rgba(245,158,11,.1);color:#B45309;"><i class="fas fa-dice me-1"></i>iGaming Ready</span>
+                        <span class="tag" style="background:rgba(16,185,129,.1);color:#065F46;"><i class="fas fa-globe me-1"></i>Multi-Site</span>
                     </div>
                 </div>
             </div>
@@ -732,7 +733,7 @@ $plans = array_filter(planManager()->getAllActivePlans(), fn($p) => empty($p['is
                     <div class="divider"></div>
                     <div class="plan-feature">
                         <i class="fas fa-check check"></i>
-                        <span><strong><?= number_format($plan['articles_per_month']) ?> บทความ</strong>/เดือน</span>
+                        <span><strong><?= $plan['articles_per_month'] > 0 ? number_format($plan['articles_per_month']) : '∞' ?> บทความ</strong>/เดือน</span>
                     </div>
                     <div class="plan-feature">
                         <i class="fas fa-check check"></i>
@@ -791,49 +792,67 @@ $plans = array_filter(planManager()->getAllActivePlans(), fn($p) => empty($p['is
             <p class="section-sub">ดูว่าฟีเจอร์ไหนได้เพิ่มเมื่ออัพเกรด</p>
         </div>
 
+        <?php
+        $cmpPlans   = array_values($plans); // paid plans only, from DB
+        $cmpCount   = count($cmpPlans);
+        $maxPrice   = $cmpCount ? max(array_column($cmpPlans, 'price')) : 0;
+        $featColPct = $cmpCount > 3 ? 30 : 35;
+        $planColPct = $cmpCount ? round((100 - $featColPct - 15) / $cmpCount) : 15;
+
+        $render = fn($v) => match($v) {
+            'check' => '<i class="fas fa-check-circle check-yes"></i>',
+            'cross' => '<i class="fas fa-times-circle check-no"></i>',
+            default => '<span style="font-size:13px;font-weight:600;">' . $v . '</span>',
+        };
+
+        $compareRows = [
+            ['label'=>'บทความต่อเดือน',      'trial'=>'5 (ตลอดชีพ)', 'type'=>'articles'],
+            ['label'=>'เว็บไซต์ WordPress',   'trial'=>'1',           'type'=>'sites'],
+            ['label'=>'คีย์เวิร์ด',           'trial'=>'–',           'type'=>'static', 'paid'=>'∞'],
+            ['label'=>'AI เขียนบทความ',        'trial'=>'check',       'type'=>'static', 'paid'=>'check'],
+            ['label'=>'Auto-post to WordPress','trial'=>'cross',       'type'=>'static', 'paid'=>'check'],
+            ['label'=>'Content Calendar',      'trial'=>'cross',       'type'=>'static', 'paid'=>'check'],
+            ['label'=>'Queue Manager',         'trial'=>'cross',       'type'=>'static', 'paid'=>'check'],
+            ['label'=>'Telegram Notifications','trial'=>'cross',       'type'=>'static', 'paid'=>'check'],
+            ['label'=>'FAQ Schema Markup',     'trial'=>'check',       'type'=>'static', 'paid'=>'check'],
+            ['label'=>'Internal Link Builder', 'trial'=>'check',       'type'=>'static', 'paid'=>'check'],
+            ['label'=>'Keyword Research',      'trial'=>'cross',       'type'=>'dataseo'],
+            ['label'=>'Custom AI Prompts',     'trial'=>'check',       'type'=>'static', 'paid'=>'check'],
+            ['label'=>'Priority Support',      'trial'=>'cross',       'type'=>'priority'],
+        ];
+
+        $planCellValue = function(array $row, array $p) use ($maxPrice): string {
+            switch ($row['type']) {
+                case 'articles':  return $p['articles_per_month'] > 0 ? number_format($p['articles_per_month']) : '∞';
+                case 'sites':     return (string)$p['max_sites'];
+                case 'dataseo':   return ($p['max_sites'] >= 3 || $p['articles_per_month'] >= 80) ? 'check' : 'cross';
+                case 'priority':  return ((float)$p['price'] >= (float)$maxPrice) ? 'check' : 'cross';
+                default:          return $row['paid'] ?? 'check';
+            }
+        };
+        ?>
         <div class="compare-table table-responsive">
             <table class="table mb-0">
                 <thead>
                     <tr>
-                        <th style="width:40%;">ฟีเจอร์</th>
+                        <th style="width:<?= $featColPct ?>%;">ฟีเจอร์</th>
                         <th class="text-center" style="width:15%;">Trial ฟรี</th>
-                        <th class="text-center highlight" style="width:15%;">Starter</th>
-                        <th class="text-center highlight" style="width:15%;">Pro</th>
-                        <th class="text-center highlight" style="width:15%;">Business</th>
+                        <?php foreach ($cmpPlans as $cp): ?>
+                        <th class="text-center highlight" style="width:<?= $planColPct ?>%;">
+                            <?= sanitize($cp['name']) ?><br>
+                            <small style="font-size:11px;font-weight:400;opacity:.85;">฿<?= number_format($cp['price'],0) ?>/เดือน</small>
+                        </th>
+                        <?php endforeach; ?>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    $rows = [
-                        ['บทความต่อเดือน', '5 (ตลอดชีพ)', '30', '80', '200'],
-                        ['เว็บไซต์ WordPress', '1', '1', '3', '10'],
-                        ['คีย์เวิร์ด', '–', '∞', '∞', '∞'],
-                        ['AI เขียนบทความ', 'check', 'check', 'check', 'check'],
-                        ['Auto-post to WordPress', 'cross', 'check', 'check', 'check'],
-                        ['Content Calendar', 'cross', 'check', 'check', 'check'],
-                        ['Queue Manager', 'cross', 'check', 'check', 'check'],
-                        ['Telegram Notifications', 'cross', 'check', 'check', 'check'],
-                        ['FAQ Schema Markup', 'check', 'check', 'check', 'check'],
-                        ['Internal Link Builder', 'check', 'check', 'check', 'check'],
-                        ['Keyword Research (DataForSEO)', 'cross', 'cross', 'check', 'check'],
-                        ['Custom AI Prompts', 'check', 'check', 'check', 'check'],
-                        ['iGaming Content Mode', 'check', 'check', 'check', 'check'],
-                        ['Priority Support', 'cross', 'cross', 'cross', 'check'],
-                    ];
-                    foreach ($rows as $r):
-                        [$label, $t, $s, $p, $b] = $r;
-                        $render = fn($v) => match($v) {
-                            'check' => '<i class="fas fa-check-circle check-yes"></i>',
-                            'cross' => '<i class="fas fa-times-circle check-no"></i>',
-                            default => '<span style="font-size:13px;font-weight:600;">' . $v . '</span>',
-                        };
-                    ?>
+                    <?php foreach ($compareRows as $row): ?>
                     <tr>
-                        <td style="font-weight:500;color:#374151;"><?= $label ?></td>
-                        <td class="text-center"><?= $render($t) ?></td>
-                        <td class="text-center" style="background:rgba(99,102,241,.03);"><?= $render($s) ?></td>
-                        <td class="text-center" style="background:rgba(99,102,241,.03);"><?= $render($p) ?></td>
-                        <td class="text-center" style="background:rgba(99,102,241,.03);"><?= $render($b) ?></td>
+                        <td style="font-weight:500;color:#374151;"><?= $row['label'] ?></td>
+                        <td class="text-center"><?= $render($row['trial']) ?></td>
+                        <?php foreach ($cmpPlans as $cp): ?>
+                        <td class="text-center" style="background:rgba(99,102,241,.03);"><?= $render($planCellValue($row, $cp)) ?></td>
+                        <?php endforeach; ?>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

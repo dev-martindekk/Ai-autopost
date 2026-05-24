@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../includes/member_auth.php';
+require_once __DIR__ . '/../includes/mailer.php';
 
 if (memberAuth()->isLoggedIn()) redirect('/member/dashboard.php');
 
-$success = '';
-$error   = '';
+$success    = '';
+$error      = '';
+$emailSent  = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCsrfToken($_POST['csrf_token'] ?? '')) {
@@ -14,18 +16,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'รูปแบบอีเมลไม่ถูกต้อง';
         } else {
-            $member = db()->fetchOne("SELECT id FROM members WHERE email = ? AND is_active = 1", [$email]);
+            $member = db()->fetchOne(
+                "SELECT id, username, full_name FROM members WHERE email = ? AND is_active = 1",
+                [$email]
+            );
             if ($member) {
-                $token = bin2hex(random_bytes(32));
+                $token     = bin2hex(random_bytes(32));
+                $expiresAt = date('Y-m-d H:i:s', time() + 3600);
                 db()->update('members', [
-                    'reset_token' => $token,
-                    'reset_token_expires' => date('Y-m-d H:i:s', time() + 3600)
+                    'reset_token'         => $token,
+                    'reset_token_expires' => $expiresAt,
                 ], 'id = ?', [$member['id']]);
 
-                logEvent('info', 'member_auth', 'Password reset requested', ['member_id' => $member['id']]);
+                $baseUrl   = rtrim(getSetting('base_url', BASE_URL), '/');
+                $resetLink = $baseUrl . '/member/reset_password.php?token=' . $token;
+                $name      = $member['full_name'] ?: $member['username'];
+
+                $emailSent = sendPasswordResetEmail($email, $name, $resetLink);
+
+                logEvent('info', 'member_auth', 'Password reset requested', [
+                    'member_id'  => $member['id'],
+                    'email_sent' => $emailSent,
+                ]);
             }
-            // Always show success to prevent email enumeration
-            $success = 'ถ้าอีเมลนี้มีในระบบ ลิงก์รีเซ็ตรหัสผ่านจะถูกส่งให้ภายในไม่กี่นาที';
+            // Always show same message (prevent email enumeration)
+            $success   = 'ถ้าอีเมลนี้มีในระบบ ลิงก์รีเซ็ตรหัสผ่านจะถูกส่งให้ภายในไม่กี่นาที';
+            $emailSent = $emailSent || !$member; // hide fallback if email not found
         }
     }
 }
@@ -64,7 +80,17 @@ $csrfToken = generateCsrfToken();
         </div>
         <div class="card-body">
             <?php if ($error):   ?><div class="alert alert-danger mb-3"><i class="fas fa-exclamation-circle me-2"></i><?= sanitize($error) ?></div><?php endif; ?>
-            <?php if ($success): ?><div class="alert alert-success mb-3"><i class="fas fa-check-circle me-2"></i><?= sanitize($success) ?></div><?php endif; ?>
+            <?php if ($success): ?>
+            <div class="alert alert-success mb-3">
+                <i class="fas fa-check-circle me-2"></i><?= sanitize($success) ?>
+            </div>
+            <?php if (!$emailSent): ?>
+            <div class="alert alert-warning mb-3" style="font-size:13px;">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>ระบบยังไม่ได้ตั้งค่า Email</strong> — กรุณาติดต่อ Admin เพื่อขอลิงก์รีเซ็ตรหัสผ่าน
+            </div>
+            <?php endif; ?>
+            <?php endif; ?>
 
             <?php if (!$success): ?>
             <p class="text-muted mb-4" style="font-size:13px;">กรอกอีเมลที่ใช้สมัคร เราจะส่งลิงก์รีเซ็ตรหัสผ่านให้</p>

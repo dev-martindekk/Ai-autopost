@@ -1,18 +1,35 @@
 <?php
 $pageTitle = 'เว็บไซต์ของฉัน';
 require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/../includes/queue_manager.php';
 
 $memberId = (int)$currentMember['id'];
+$isTrial  = planManager()->isTrial($memberId);
 
 // Handle delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
     $deleteId = (int)$_POST['delete_id'];
-    // Verify ownership
     $site = db()->fetchOne("SELECT id FROM sites WHERE id=? AND owner_type='member' AND owner_id=?", [$deleteId, $memberId]);
     if ($site) {
         db()->delete('sites', 'id = ?', [$deleteId]);
         setFlash('success', 'ลบเว็บไซต์เรียบร้อยแล้ว');
+    }
+    redirect('/member/sites_list.php');
+}
+
+// Handle "Run AI" — add generate_article job to queue
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'run_ai') {
+    verifyCsrfToken($_POST['csrf_token'] ?? '');
+    $runSiteId = (int)($_POST['site_id'] ?? 0);
+    $site = db()->fetchOne("SELECT id FROM sites WHERE id=? AND owner_type='member' AND owner_id=?", [$runSiteId, $memberId]);
+    if ($site) {
+        if (!planManager()->canUse($memberId, 'articles')) {
+            setFlash('error', 'Quota บทความหมดแล้ว กรุณาอัพเกรดแพ็คเกจ');
+        } else {
+            queue()->push('generate_article', ['site_id' => $runSiteId, 'manual' => true], ['site_id' => $runSiteId]);
+            setFlash('success', 'เพิ่ม Job สร้างบทความลง Queue แล้ว — รอประมาณ 1-3 นาที');
+        }
     }
     redirect('/member/sites_list.php');
 }
@@ -131,6 +148,17 @@ $canAdd = !$quota || $quota['sites']['remaining'] > 0 || ($quota['sites']['unlim
                     <i class="fas fa-tag me-1"></i><?= sanitize($site['main_topic'] ?? 'general') ?>
                 </div>
 
+                <?php if ($isTrial): ?>
+                <form method="POST" class="mb-2"
+                      onsubmit="return confirm('สร้างบทความใหม่สำหรับเว็บนี้? (Trial: ไม่โพสต์ WP อัตโนมัติ)')">
+                    <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
+                    <input type="hidden" name="action" value="run_ai">
+                    <input type="hidden" name="site_id" value="<?= $site['id'] ?>">
+                    <button type="submit" class="btn btn-sm btn-success w-100">
+                        <i class="fas fa-robot me-1"></i>สร้างบทความด้วย AI
+                    </button>
+                </form>
+                <?php endif; ?>
                 <div class="d-flex gap-2">
                     <a href="/member/sites_edit.php?id=<?= $site['id'] ?>" class="btn btn-sm btn-outline-primary flex-fill">
                         <i class="fas fa-edit me-1"></i>แก้ไข

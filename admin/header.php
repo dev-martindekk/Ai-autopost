@@ -1084,6 +1084,10 @@ $csrfToken = generateCsrfToken();
                 <i class="fas fa-shield-halved"></i>
                 <span>Anti-Block Proxy</span>
             </a>
+            <a class="nav-link <?= $currentPage === 'settings_email' ? 'active' : '' ?>" href="<?= ADMIN_URL ?>/settings_email.php">
+                <i class="fas fa-envelope"></i>
+                <span>Email (SMTP)</span>
+            </a>
 
             <div class="nav-section-title">Logs</div>
             <a class="nav-link <?= $currentPage === 'logs' ? 'active' : '' ?>" href="<?= ADMIN_URL ?>/logs.php">

@@ -46,7 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     if ($deleteId) {
         $member = db()->fetchOne("SELECT id, username FROM members WHERE id=?", [$deleteId]);
         if ($member) {
-            // Cascade delete all member data
+            db()->query("SET FOREIGN_KEY_CHECKS=0");
+
+            // Member-level tables
             db()->delete('invite_code_uses',    'member_id = ?', [$deleteId]);
             db()->delete('member_activity_logs', 'member_id = ?', [$deleteId]);
             db()->delete('member_plans',         'member_id = ?', [$deleteId]);
@@ -55,17 +57,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
             db()->delete('member_settings',      'member_id = ?', [$deleteId]);
             db()->delete('prompt_templates',     "owner_type='member' AND owner_id = ?", [$deleteId]);
 
-            // Delete member's sites + cascade
+            // Sites + all dependent tables
             $siteIds = db()->fetchAll("SELECT id FROM sites WHERE owner_type='member' AND owner_id=?", [$deleteId]);
             foreach ($siteIds as $site) {
-                db()->delete('keywords',      'site_id = ?', [$site['id']]);
-                db()->delete('content_plan',  'site_id = ?', [$site['id']]);
-                db()->delete('outbound_links', 'site_id = ?', [$site['id']]);
-                db()->delete('articles',      "owner_type='member' AND site_id = ?", [$site['id']]);
+                $sid = $site['id'];
+                $articleIds = db()->fetchAll("SELECT id FROM articles WHERE site_id=?", [$sid]);
+                if ($articleIds) {
+                    $aids = implode(',', array_column($articleIds, 'id'));
+                    db()->query("DELETE FROM article_keywords WHERE article_id IN ($aids)");
+                    db()->query("DELETE FROM article_performance WHERE article_id IN ($aids)");
+                    db()->query("DELETE FROM article_performance_history WHERE article_id IN ($aids)");
+                    db()->query("DELETE FROM article_translations WHERE article_id IN ($aids)");
+                    db()->query("DELETE FROM ctr_optimizations WHERE article_id IN ($aids)");
+                    db()->query("DELETE FROM ab_title_variations WHERE test_id IN (SELECT id FROM ab_title_tests WHERE article_id IN ($aids))");
+                    db()->query("DELETE FROM ab_title_tests WHERE article_id IN ($aids)");
+                }
+                db()->delete('internal_links',           'site_id = ?', [$sid]);
+                db()->delete('images',                   'site_id = ?', [$sid]);
+                db()->delete('articles',                 'site_id = ?', [$sid]);
+                db()->delete('localized_content_plan',   "content_plan_id IN (SELECT id FROM content_plan WHERE site_id=$sid)");
+                db()->delete('content_plan',             'site_id = ?', [$sid]);
+                db()->delete('site_keywords',            'site_id = ?', [$sid]);
+                db()->delete('keywords',                 'site_id = ?', [$sid]);
+                db()->delete('eeat_pages',               'site_id = ?', [$sid]);
+                db()->delete('gsc_credentials',          'site_id = ?', [$sid]);
+                db()->delete('gsc_keyword_opportunities','site_id = ?', [$sid]);
+                db()->delete('gsc_performance',          'site_id = ?', [$sid]);
+                db()->delete('outbound_links',           'site_id = ?', [$sid]);
+                db()->query("DELETE FROM job_queue WHERE site_id=?", [$sid]);
             }
             db()->delete('sites', "owner_type='member' AND owner_id = ?", [$deleteId]);
 
             db()->delete('members', 'id = ?', [$deleteId]);
+            db()->query("SET FOREIGN_KEY_CHECKS=1");
 
             logEvent('info', 'members', 'Member deleted by admin', ['member_id' => $deleteId, 'username' => $member['username']]);
             setFlash('success', "ลบสมาชิก \"{$member['username']}\" เรียบร้อยแล้ว");

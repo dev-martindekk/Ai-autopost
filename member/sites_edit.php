@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'owner_id'                => $memberId,
         ];
         if (!empty($wpPass)) {
-            $data['wp_app_password'] = $wpPass;
+            $data['wp_app_password'] = encrypt($wpPass);
         }
 
         if ($isEdit) {

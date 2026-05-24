@@ -49,6 +49,10 @@ RUN echo '<Directory /var/www/html>\n\
 COPY ./config/crontab /etc/cron.d/seo-cron
 RUN chmod 0644 /etc/cron.d/seo-cron
 
+# Create php-job wrapper: sources /etc/docker-env before running PHP (fixes cron env vars)
+RUN printf '#!/bin/bash\nset -a\nsource /etc/docker-env 2>/dev/null\nset +a\nexec /usr/local/bin/php "$@"\n' > /usr/local/bin/php-job \
+    && chmod +x /usr/local/bin/php-job
+
 # Set working directory
 WORKDIR /var/www/html
 
@@ -58,4 +62,8 @@ RUN chown -R www-data:www-data /var/www/html \
     && chown -R www-data:www-data /var/www/html/logs
 
 # Start Apache and cron
-CMD service cron start && apache2-foreground
+# Export Docker env vars to /etc/docker-env so cron jobs can read them (cron doesn't inherit Docker env)
+CMD printenv | grep -E "^(DB_HOST|DB_NAME|DB_USER|DB_PASS|ENCRYPTION_KEY|BASE_URL|APP_ENV|TZ)=" > /etc/docker-env \
+    && chmod 644 /etc/docker-env \
+    && service cron start \
+    && apache2-foreground

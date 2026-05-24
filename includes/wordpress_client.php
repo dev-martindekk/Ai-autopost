@@ -10,7 +10,8 @@ require_once __DIR__ . '/helpers.php';
 
 class WordPressClient {
     private $baseUrl;
-    private $apiUrl;
+    private $apiUrl;   // Root /wp-json URL (for site info)
+    private $v2Url;    // /wp-json/wp/v2 URL (for content endpoints)
     private $username;
     private $appPassword;
     private $siteId;
@@ -19,7 +20,14 @@ class WordPressClient {
     public function __construct(array $site) {
         $this->siteId = $site['id'] ?? null;
         $this->baseUrl = rtrim($site['base_url'], '/');
-        $this->apiUrl = rtrim($site['wp_api_url'], '/');
+        $rawApi = rtrim($site['wp_api_url'], '/');
+        // Strip /wp/v2 suffix if already present — store root separately
+        if (str_ends_with($rawApi, '/wp/v2')) {
+            $this->apiUrl = substr($rawApi, 0, -strlen('/wp/v2'));
+        } else {
+            $this->apiUrl = $rawApi;
+        }
+        $this->v2Url = $this->apiUrl . '/wp/v2';
         $this->username = $site['wp_user'];
         $this->appPassword = isset($site['wp_app_password']) ? decrypt($site['wp_app_password']) : '';
     }
@@ -259,7 +267,7 @@ class WordPressClient {
         $fileName = $fileName ?: basename($filePath);
         $mimeType = mime_content_type($filePath);
 
-        $url = $this->apiUrl . '/media';
+        $url = $this->v2Url . '/media';
 
         $ch = curl_init($url);
 
@@ -403,7 +411,8 @@ class WordPressClient {
      * Make HTTP request to WordPress REST API
      */
     private function request(string $method, string $endpoint, array $data = [], bool $auth = false): ?array {
-        $url = $this->apiUrl . $endpoint;
+        // Empty endpoint = WP REST API root (no /wp/v2 needed)
+        $url = ($endpoint === '') ? $this->apiUrl : $this->v2Url . $endpoint;
 
         // Add query params for GET requests
         if ($method === 'GET' && !empty($data)) {

@@ -574,6 +574,8 @@ function processGenerateArticle(array $payload): array {
     // ============================================
     $articleId = db()->insert('articles', [
         'site_id' => $siteId,
+        'owner_type' => $site['owner_type'] ?? 'admin',
+        'owner_id' => $site['owner_id'] ?? null,
         'title' => $title,
         'seo_title' => mb_substr($title, 0, 60),
         'slug' => $slug,

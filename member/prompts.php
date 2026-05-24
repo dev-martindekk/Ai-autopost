@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'save_word_settings') {
         $minWords      = max(500, min(10000, (int)($_POST['min_words'] ?? 2500)));
-        $maxWords      = max(1000, min(20000, (int)($_POST['max_words'] ?? 4000)));
+        $maxWords      = max(500, min(20000, (int)($_POST['max_words'] ?? 4000)));
         $internalLinks = max(0, min(20, (int)($_POST['internal_links'] ?? 1)));
         if ($maxWords <= $minWords) $maxWords = $minWords + 500;
 
@@ -274,7 +274,7 @@ $displayLinks = $curLinks ?? $sysLinks;
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">จำนวนคำสูงสุด</label>
-                    <input type="number" class="form-control" name="max_words" value="<?= $displayMax ?>" min="1000" max="20000" step="100">
+                    <input type="number" class="form-control" name="max_words" value="<?= $displayMax ?>" min="500" max="20000" step="100">
                     <small class="text-muted">ใช้แทน <code>{max_words}</code></small>
                 </div>
                 <div class="col-md-4">
