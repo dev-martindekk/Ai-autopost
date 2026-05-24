@@ -1,0 +1,2 @@
+# Member portal PHP settings
+php_value output_buffering 65536
