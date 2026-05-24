@@ -1100,10 +1100,6 @@ $csrfToken = generateCsrfToken();
                 <i class="fas fa-user-gear"></i>
                 <span>Profile</span>
             </a>
-            <a class="nav-link <?= $currentPage === 'security_2fa' ? 'active' : '' ?>" href="<?= ADMIN_URL ?>/security_2fa.php">
-                <i class="fas fa-shield-alt"></i>
-                <span>2FA Security</span>
-            </a>
             <a class="nav-link text-danger" href="<?= ADMIN_URL ?>/logout.php">
                 <i class="fas fa-right-from-bracket"></i>
                 <span>Logout</span>
