@@ -329,11 +329,35 @@ foreach ($providers as $p) {
                             </div>
                         <?php endif; ?>
 
+                        <!-- Credit Balance -->
+                        <?php if (in_array($provider['provider_name'], ['openrouter', 'openai']) && !empty($provider['api_key'])): ?>
+                        <div class="credit-display mb-3 d-none" id="credit-<?= $provider['id'] ?>">
+                            <div class="p-3 rounded" style="background:#F0FDF4;border:1px solid #BBF7D0;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-semibold text-success" style="font-size:13px;">
+                                        <i class="fas fa-wallet me-1"></i>เครดิตคงเหลือ
+                                    </span>
+                                    <span class="credit-remaining fw-bold text-success" style="font-size:18px;">—</span>
+                                </div>
+                                <div class="credit-details text-muted" style="font-size:11px;"></div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <!-- Buttons -->
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary flex-grow-1">
                                 <i class="fas fa-save me-2"></i>บันทึก
                             </button>
+                            <?php if (in_array($provider['provider_name'], ['openrouter', 'openai']) && !empty($provider['api_key'])): ?>
+                            <button type="button"
+                                    class="btn btn-outline-warning check-credits-btn"
+                                    data-provider-id="<?= $provider['id'] ?>"
+                                    data-provider-name="<?= sanitize($provider['provider_name']) ?>"
+                                    title="เช็คเครดิตคงเหลือ">
+                                <i class="fas fa-coins me-1"></i>เครดิต
+                            </button>
+                            <?php endif; ?>
                             <button type="button"
                                     class="btn btn-outline-info refresh-models-btn"
                                     data-provider-id="<?= $provider['id'] ?>"
@@ -513,6 +537,62 @@ $(document).on(\'click\', function(e) {
     if (!$(e.target).closest(\'.model-selector\').length) {
         $(\'.model-dropdown\').addClass(\'d-none\');
     }
+});
+
+// Check Credits
+$(\'.check-credits-btn\').click(function() {
+    const btn = $(this);
+    const providerId = btn.data(\'provider-id\');
+    const providerName = btn.data(\'provider-name\');
+    const creditBox = $(\'#credit-\' + providerId);
+
+    btn.prop(\'disabled\', true).html(\'<span class="spinner-border spinner-border-sm me-1"></span>กำลังเช็ค...\');
+
+    $.ajax({
+        url: \'' . $adminUrl . '/ajax/check_credits.php\',
+        method: \'POST\',
+        data: { csrf_token: csrfToken, provider_id: providerId },
+        timeout: 15000,
+        success: function(res) {
+            btn.prop(\'disabled\', false).html(\'<i class="fas fa-coins me-1"></i>เครดิต\');
+            creditBox.removeClass(\'d-none\');
+
+            if (!res.success) {
+                creditBox.find(\'.credit-remaining\').text(\'—\').removeClass(\'text-success\').addClass(\'text-danger\');
+                creditBox.find(\'.credit-details\').text(res.message);
+                creditBox.find(\'> div\').css({background:\'#FFF1F2\', borderColor:\'#FECDD3\'});
+                return;
+            }
+
+            creditBox.find(\'> div\').css({background:\'#F0FDF4\', borderColor:\'#BBF7D0\'});
+            creditBox.find(\'.credit-remaining\').removeClass(\'text-danger\').addClass(\'text-success\');
+
+            if (providerName === \'openrouter\') {
+                const remaining = res.remaining !== null ? \'$\' + res.remaining.toFixed(4) : \'ไม่จำกัด\';
+                const limit     = res.limit     !== null ? \'$\' + res.limit.toFixed(2) : \'ไม่จำกัด\';
+                const usage     = \'$\' + res.usage.toFixed(4);
+                creditBox.find(\'.credit-remaining\').text(remaining);
+                let details = \'ใช้ไปแล้ว: \' + usage + \' / วงเงิน: \' + limit;
+                if (res.is_free_tier) details += \' (Free Tier)\';
+                if (res.label)       details += \' · \' + res.label;
+                if (res.rate_limit)  details += \' · \' + (res.rate_limit.requests || \'?\') + \' req/\' + (res.rate_limit.interval || \'?\');
+                creditBox.find(\'.credit-details\').text(details);
+            } else if (providerName === \'openai\') {
+                const remaining = res.remaining !== null ? \'$\' + res.remaining.toFixed(2) : \'ไม่ทราบ\';
+                creditBox.find(\'.credit-remaining\').text(remaining);
+                let details = \'ใช้ไปแล้ว: $\' + res.usage.toFixed(4);
+                if (res.limit) details += \' / วงเงิน: $\' + parseFloat(res.limit).toFixed(2);
+                if (res.period) details += \' · รอบบิล: \' + res.period;
+                creditBox.find(\'.credit-details\').text(details);
+            }
+        },
+        error: function() {
+            btn.prop(\'disabled\', false).html(\'<i class="fas fa-coins me-1"></i>เครดิต\');
+            creditBox.removeClass(\'d-none\');
+            creditBox.find(\'.credit-remaining\').text(\'Error\').removeClass(\'text-success\').addClass(\'text-danger\');
+            creditBox.find(\'.credit-details\').text(\'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์\');
+        }
+    });
 });
 
 // Refresh Models
