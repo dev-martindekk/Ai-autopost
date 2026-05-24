@@ -74,15 +74,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setFlash('success', "สมัครสมาชิกสำเร็จ! ได้รับแพ็คเกจ {$planLabel} เรียบร้อยแล้ว");
                 redirect('/member/login.php');
             } else {
-                // Auto-assign Trial plan
+                // Auto-verify immediately (no email system) + assign Trial plan
+                db()->update('members', ['is_verified' => 1], 'id = ?', [$memberId]);
                 planManager()->activateTrialPlan($memberId);
-                $success = 'สมัครสมาชิกสำเร็จ! คุณได้รับแพ็คเกจ Trial ฟรี 5 บทความ กรุณารอการยืนยันจาก Admin เพื่อเปิดใช้งานบัญชี';
-                logEvent('info', 'register', 'New member registered (pending approval, trial assigned)', ['member_id' => $memberId]);
+                logEvent('info', 'register', 'New member registered (auto-verified, trial assigned)', ['member_id' => $memberId]);
                 try {
                     require_once __DIR__ . '/../includes/telegram_client.php';
                     $newMember = db()->fetchOne("SELECT username, email FROM members WHERE id=?", [$memberId]);
                     (new TelegramClient())->notifyNewMember($newMember);
                 } catch (Exception $e) {}
+                setFlash('success', 'สมัครสมาชิกสำเร็จ! ได้รับแพ็คเกจ Trial ฟรี 5 บทความ เข้าสู่ระบบได้เลย');
+                redirect('/member/login.php');
             }
         } else {
             $error = $result['message'];
