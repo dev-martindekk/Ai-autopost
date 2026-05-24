@@ -199,13 +199,13 @@ $sites = db()->fetchAll("SELECT id, name FROM sites WHERE owner_type='member' AN
                     </button>
                 </form>
                 <?php
-                $quota = $quota ?? planManager()->getQuota($memberId);
-                $artQ = $quota['articles'];
+                try { $quota = $quota ?? planManager()->getQuota($memberId); } catch (Exception $e) { $quota = null; }
+                $artQ = $quota['articles'] ?? null;
                 ?>
                 <hr>
                 <div class="text-center" style="font-size:12px;color:#64748B;">
                     <i class="fas fa-newspaper me-1"></i>
-                    Quota: <?= $artQ['unlimited'] ? '∞' : "{$artQ['remaining']} เหลือ / {$artQ['limit']}" ?>
+                    Quota: <?= $artQ ? ($artQ['unlimited'] ? '∞' : "{$artQ['remaining']} เหลือ / {$artQ['limit']}") : '-' ?>
                 </div>
                 <?php endif; ?>
             </div>

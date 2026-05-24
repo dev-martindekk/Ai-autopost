@@ -78,11 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (Exception $e) {}
 
             logEvent('info', 'billing', 'Slip uploaded', ['member_id' => $memberId, 'amount' => $amount]);
-            $success = 'ส่งสลิปเรียบร้อยแล้ว! กรุณารอการตรวจสอบจาก Admin ภายใน 24 ชั่วโมง';
+            setFlash('success', 'ส่งสลิปเรียบร้อยแล้ว! กรุณารอการตรวจสอบจาก Admin ภายใน 24 ชั่วโมง');
+            redirect('/member/billing.php');
         }
     }
 }
 
+$flash   = getFlash();
+$success = $flash && $flash['type'] === 'success' ? $flash['message'] : '';
 $isTrial = $quota['is_trial'] ?? false;
 
 // Paid plans only (exclude trial from upgrade selection)
