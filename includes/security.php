@@ -182,8 +182,7 @@ class SecurityManager {
                    expires_at = CASE WHEN VALUES(is_permanent)=1 THEN NULL
                                      WHEN expires_at IS NULL THEN NULL
                                      WHEN VALUES(expires_at) > expires_at THEN VALUES(expires_at)
-                                     ELSE expires_at END,
-                   banned_at = NOW()",
+                                     ELSE expires_at END",
                 [$ip, $reason, $permanent ? 1 : 0, $expiresAt, $bannedBy]
             );
             $this->logEvent('ip_banned', 'high',
@@ -363,7 +362,7 @@ class SecurityManager {
             "SELECT ib.*, au.username as banned_by_name
              FROM ip_bans ib
              LEFT JOIN admin_users au ON au.id = ib.banned_by
-             ORDER BY ib.banned_at DESC"
+             ORDER BY ib.created_at DESC"
         );
     }
 
