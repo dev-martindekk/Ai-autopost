@@ -147,6 +147,34 @@ $user = db()->fetchOne("SELECT * FROM admin_users WHERE id = ?", [$userId]);
             </div>
         </div>
 
+    </div>
+
+    <!-- ── Right col: Session Info + เปลี่ยนรหัสผ่าน ───────────────────────── -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-info-circle me-2"></i>ข้อมูล Session</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tr>
+                        <td class="text-muted ps-3">Session ID</td>
+                        <td><code><?= substr(session_id(), 0, 16) ?>...</code></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-3">IP Address</td>
+                        <td><code><?= sanitize($_SERVER['REMOTE_ADDR'] ?? 'Unknown') ?></code></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-3">Login Time</td>
+                        <td><?= isset($_SESSION['login_time']) ? date('d/m/Y H:i:s', $_SESSION['login_time']) : '-' ?></td>
+                    </tr>
+                    <tr class="border-0">
+                        <td class="text-muted ps-3">User Agent</td>
+                        <td><small class="text-break"><?= sanitize(substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 80)) ?>...</small></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
         <!-- เปลี่ยนรหัสผ่าน -->
         <div class="card mt-4">
             <div class="card-header"><i class="fas fa-lock me-2"></i>เปลี่ยนรหัสผ่าน</div>
@@ -171,33 +199,6 @@ $user = db()->fetchOne("SELECT * FROM admin_users WHERE id = ?", [$userId]);
                         <i class="fas fa-key me-2"></i>เปลี่ยนรหัสผ่าน
                     </button>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── Right col: Session Info ──────────────────────────────────────────── -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header"><i class="fas fa-info-circle me-2"></i>ข้อมูล Session</div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <tr>
-                        <td class="text-muted ps-3">Session ID</td>
-                        <td><code><?= substr(session_id(), 0, 16) ?>...</code></td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted ps-3">IP Address</td>
-                        <td><code><?= sanitize($_SERVER['REMOTE_ADDR'] ?? 'Unknown') ?></code></td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted ps-3">Login Time</td>
-                        <td><?= isset($_SESSION['login_time']) ? date('d/m/Y H:i:s', $_SESSION['login_time']) : '-' ?></td>
-                    </tr>
-                    <tr class="border-0">
-                        <td class="text-muted ps-3">User Agent</td>
-                        <td><small class="text-break"><?= sanitize(substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 80)) ?>...</small></td>
-                    </tr>
-                </table>
             </div>
         </div>
     </div>
