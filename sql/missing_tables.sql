@@ -85,19 +85,39 @@ INSERT IGNORE INTO `topics` (`slug`, `name_th`, `is_active`, `sort_order`) VALUE
 ('general', 'ทั่วไป', 1, 1);
 
 -- ============================================================
--- ALTER: telegram_settings — add owner columns
+-- ALTER: telegram_settings — add owner columns (conditional via procedure)
 -- ============================================================
-ALTER TABLE `telegram_settings`
-    MODIFY COLUMN `setting_name` VARCHAR(50) NOT NULL DEFAULT 'default',
-    ADD COLUMN IF NOT EXISTS `owner_type` ENUM('admin','member') NOT NULL DEFAULT 'admin' AFTER `setting_name`,
-    ADD COLUMN IF NOT EXISTS `owner_id` INT UNSIGNED DEFAULT NULL AFTER `owner_type`;
+DROP PROCEDURE IF EXISTS migrate_telegram;
+DELIMITER //
+CREATE PROCEDURE migrate_telegram()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telegram_settings' AND COLUMN_NAME = 'owner_type'
+    ) THEN
+        ALTER TABLE `telegram_settings`
+            ADD COLUMN `owner_type` ENUM('admin','member') NOT NULL DEFAULT 'admin' AFTER `setting_name`,
+            ADD COLUMN `owner_id` INT UNSIGNED DEFAULT NULL AFTER `owner_type`;
+    END IF;
 
--- Drop old unique key and add new composite one
-ALTER TABLE `telegram_settings`
-    DROP INDEX IF EXISTS `unique_setting`;
+    IF EXISTS (
+        SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telegram_settings' AND CONSTRAINT_NAME = 'unique_setting'
+    ) THEN
+        ALTER TABLE `telegram_settings` DROP INDEX `unique_setting`;
+    END IF;
 
-ALTER TABLE `telegram_settings`
-    ADD UNIQUE KEY IF NOT EXISTS `unique_owner_setting` (`owner_type`, `owner_id`, `setting_name`);
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telegram_settings' AND CONSTRAINT_NAME = 'unique_owner_setting'
+    ) THEN
+        ALTER TABLE `telegram_settings`
+            ADD UNIQUE KEY `unique_owner_setting` (`owner_type`, `owner_id`, `setting_name`);
+    END IF;
+END//
+DELIMITER ;
+CALL migrate_telegram();
+DROP PROCEDURE IF EXISTS migrate_telegram;
 
 -- ============================================================
 -- ALTER: admin_users — add staff to role enum
