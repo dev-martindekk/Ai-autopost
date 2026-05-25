@@ -1,9 +1,9 @@
 <?php
 $pageTitle = 'SaaS Dashboard';
 require_once __DIR__ . '/../includes/plan_manager.php';
+require_once __DIR__ . '/../includes/auth.php';
+auth()->requireRole('staff');  // ตรวจสิทธิ์ก่อน header.php output HTML
 require_once __DIR__ . '/header.php';
-
-auth()->requireRole('staff');
 
 $stats = planManager()->getSaasStats();
 

@@ -2,9 +2,9 @@
 $pageTitle = 'แก้ไขสมาชิก';
 require_once __DIR__ . '/../includes/plan_manager.php';
 require_once __DIR__ . '/../includes/default_prompts.php';
-require_once __DIR__ . '/header.php';
-
+require_once __DIR__ . '/../includes/auth.php';
 auth()->requireRole('staff');
+require_once __DIR__ . '/header.php';
 
 $memberId = (int)($_GET['id'] ?? 0);
 $member   = db()->fetchOne("SELECT * FROM members WHERE id=?", [$memberId]);

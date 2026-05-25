@@ -1,9 +1,9 @@
 <?php
 $pageTitle = 'จัดการ Plans';
 require_once __DIR__ . '/../includes/plan_manager.php';
-require_once __DIR__ . '/header.php';
-
+require_once __DIR__ . '/../includes/auth.php';
 auth()->requireRole('admin');
+require_once __DIR__ . '/header.php';
 
 // Handle delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {

@@ -1,8 +1,9 @@
 <?php
 $pageTitle = 'ตั้งค่า Email (SMTP)';
+require_once __DIR__ . '/../includes/auth.php';
+auth()->requireRole('admin');
 require_once __DIR__ . '/header.php';
 require_once __DIR__ . '/../includes/mailer.php';
-auth()->requireRole('admin');
 
 $flash = getFlash();
 

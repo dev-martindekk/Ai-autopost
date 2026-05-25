@@ -1,9 +1,9 @@
 <?php
 $pageTitle = 'Invite Codes';
 require_once __DIR__ . '/../includes/plan_manager.php';
-require_once __DIR__ . '/header.php';
-
+require_once __DIR__ . '/../includes/auth.php';
 auth()->requireRole('admin');
+require_once __DIR__ . '/header.php';
 
 $errors = [];
 

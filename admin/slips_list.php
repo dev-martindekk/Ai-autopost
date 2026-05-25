@@ -1,8 +1,8 @@
 <?php
 $pageTitle = 'ตรวจสลิป';
-require_once __DIR__ . '/header.php';
-
+require_once __DIR__ . '/../includes/auth.php';
 auth()->requireRole('staff');
+require_once __DIR__ . '/header.php';
 
 $statusFilter = $_GET['status'] ?? 'pending';
 

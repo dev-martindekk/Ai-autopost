@@ -1,8 +1,8 @@
 <?php
 $pageTitle = 'จัดการ Staff';
-require_once __DIR__ . '/header.php';
-
+require_once __DIR__ . '/../includes/auth.php';
 auth()->requireRole('super_admin');
+require_once __DIR__ . '/header.php';
 
 // ต้องเป็น super_admin เท่านั้น
 if (!auth()->isSuperAdmin()) {
