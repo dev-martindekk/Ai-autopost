@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../includes/auth.php';
+auth()->requireAuth();
 $pageTitle = 'โปรไฟล์';
 require_once __DIR__ . '/header.php';
 

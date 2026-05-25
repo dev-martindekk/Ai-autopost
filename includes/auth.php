@@ -315,11 +315,16 @@ class Auth {
      * Require authentication (redirect if not logged in)
      */
     public function requireAuth(): void {
-        if (!$this->isLoggedIn()) {
+        if (!$this->isLoggedIn() || $this->isMember()) {
             if (isAjax()) {
                 jsonResponse(['success' => false, 'message' => 'Session expired'], 401);
             }
-            setFlash('warning', 'กรุณาเข้าสู่ระบบ');
+            if ($this->isMember()) {
+                $this->logout();
+                setFlash('warning', 'กรุณาเข้าสู่ระบบด้วยบัญชี Admin');
+            } else {
+                setFlash('warning', 'กรุณาเข้าสู่ระบบ');
+            }
             redirect(ADMIN_URL . '/login.php');
         }
     }
