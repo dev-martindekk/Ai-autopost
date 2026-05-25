@@ -39,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Map column positions
             $kwCol  = array_search('keyword', $headers);
-            $volCol = array_search('volume', $headers) !== false ? array_search('volume', $headers) : array_search('search volume', $headers);
+            $volPos = array_search('volume', $headers);
+            if ($volPos === false) $volPos = array_search('search volume', $headers);
+            $volCol = $volPos; // false if not found
 
             if ($kwCol === false) {
                 $errors[] = 'ไม่พบคอลัมน์ "keyword" ในไฟล์ CSV';
@@ -64,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'keyword'      => $kw,
                         'keyword_type' => 'primary',
                         'topic'        => $topic,
-                        'search_volume'=> isset($volCol) && isset($row[$volCol]) ? (int)str_replace([',','.'], '', $row[$volCol]) : null,
+                        'search_volume'=> ($volCol !== false && isset($row[$volCol])) ? (int)str_replace([',','.'], '', $row[$volCol]) : null,
                         'language_code'=> 'th',
                         'priority'     => 10,
                         'is_active'    => 1,

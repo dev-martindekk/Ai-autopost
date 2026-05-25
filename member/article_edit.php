@@ -1,12 +1,16 @@
 <?php
 $pageTitle = 'แก้ไขบทความ';
 require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/../includes/wordpress_client.php';
 
 $memberId  = (int)$currentMember['id'];
 $articleId = (int)($_GET['id'] ?? 0);
 
 $article = db()->fetchOne(
-    "SELECT * FROM articles WHERE id=? AND owner_type='member' AND owner_id=?",
+    "SELECT a.*, s.wp_api_url, s.wp_user, s.wp_app_password, s.post_status
+     FROM articles a
+     LEFT JOIN sites s ON s.id = a.site_id
+     WHERE a.id=? AND a.owner_type='member' AND a.owner_id=?",
     [$articleId, $memberId]
 );
 
@@ -28,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (empty($content)) {
         $error = 'กรุณากรอกเนื้อหาบทความ';
     } else {
+        $isPublished = $article['status'] === 'published' && !empty($article['wp_post_id']);
+
         db()->update('articles', [
             'title'            => $title,
             'seo_title'        => mb_substr($title, 0, 60),
@@ -35,11 +41,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'content'          => $content,
             'meta_description' => $metaDescription,
             'word_count'       => str_word_count(strip_tags($content)),
-            'status'           => $article['status'] === 'published' ? 'generated' : $article['status'],
             'updated_at'       => date('Y-m-d H:i:s'),
+            // Keep 'published' status — do not reset to 'generated' (would allow duplicate WP post on re-publish)
         ], 'id = ?', [$articleId]);
 
-        setFlash('success', 'บันทึกการแก้ไขเรียบร้อยแล้ว');
+        // If already published on WordPress, update the WP post too
+        if ($isPublished && !empty($article['wp_api_url'])) {
+            try {
+                $wp = new WordPressClient($article);
+                $wpData = [
+                    'title'   => $title,
+                    'content' => $content,
+                ];
+                if ($metaDescription) {
+                    $wpData['meta'] = ['_yoast_wpseo_metadesc' => $metaDescription];
+                }
+                $wp->updatePost((int)$article['wp_post_id'], $wpData);
+                setFlash('success', 'บันทึกและอัพเดทบน WordPress เรียบร้อยแล้ว');
+            } catch (Exception $e) {
+                setFlash('success', 'บันทึกการแก้ไขแล้ว (อัพเดท WordPress ไม่สำเร็จ: ' . $e->getMessage() . ')');
+            }
+        } else {
+            setFlash('success', 'บันทึกการแก้ไขเรียบร้อยแล้ว');
+        }
+
         redirect('/member/article_view.php?id=' . $articleId);
     }
 }
@@ -64,9 +89,13 @@ $flash = getFlash();
         <i class="fas fa-arrow-left me-1"></i>กลับ
     </a>
     <h5 class="mb-0 fw-bold" style="color:#1E293B;">แก้ไขบทความ</h5>
-    <?php if ($article['status'] === 'published'): ?>
+    <?php if ($article['status'] === 'published' && !empty($article['wp_post_id'])): ?>
+    <span class="badge bg-info text-white" style="font-size:11px;">
+        <i class="fas fa-sync me-1"></i>บันทึกแล้วจะอัพเดทบน WordPress อัตโนมัติ
+    </span>
+    <?php elseif ($article['status'] === 'published'): ?>
     <span class="badge bg-warning text-dark" style="font-size:11px;">
-        <i class="fas fa-exclamation-triangle me-1"></i>บทความนี้เผยแพร่แล้ว — การแก้ไขจะเปลี่ยนสถานะกลับเป็น "รอโพสต์"
+        <i class="fas fa-exclamation-triangle me-1"></i>บทความนี้เผยแพร่แล้ว
     </span>
     <?php endif; ?>
 </div>
