@@ -19,14 +19,20 @@ if (!validateCsrfToken($_POST['csrf_token'] ?? '')) {
 }
 
 $botToken = trim($_POST['bot_token'] ?? '');
-$chatId = trim($_POST['chat_id'] ?? '');
+$chatId   = trim($_POST['chat_id'] ?? '');
 
 try {
-    // Get existing settings if bot_token not provided
-    if (empty($botToken)) {
-        $settings = db()->fetchOne("SELECT bot_token FROM telegram_settings WHERE setting_name = 'default'");
-        if ($settings && !empty($settings['bot_token'])) {
-            $botToken = $settings['bot_token'];
+    // Fallback: load saved settings for this owner
+    if (empty($botToken) || empty($chatId)) {
+        $ownerData = auth()->getOwnerData();
+        $saved = db()->fetchOne(
+            "SELECT bot_token, chat_id FROM telegram_settings
+             WHERE setting_name = 'default' AND owner_type = ? AND owner_id = ?",
+            [$ownerData['owner_type'], $ownerData['owner_id']]
+        );
+        if ($saved) {
+            if (empty($botToken)) $botToken = $saved['bot_token'] ?? '';
+            if (empty($chatId))   $chatId   = $saved['chat_id']   ?? '';
         }
     }
 

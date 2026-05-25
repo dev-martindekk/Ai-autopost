@@ -48,10 +48,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('success', 'บันทึกการตั้งค่า Telegram สำเร็จ');
     } elseif ($action === 'test') {
         require_once __DIR__ . '/../includes/telegram_client.php';
-        $tg = new TelegramClient($ownerType, $ownerId);
-        $result = $tg->send("🤖 AI AutoPost SEO\n\nทดสอบการแจ้งเตือน Telegram สำเร็จ!");
-        if ($result) setFlash('success', 'ส่งข้อความทดสอบสำเร็จ');
-        else setFlash('error', 'ส่งข้อความล้มเหลว ตรวจสอบ Bot Token และ Chat ID');
+        $saved = db()->fetchOne(
+            "SELECT * FROM telegram_settings WHERE setting_name='default' AND owner_type=? AND owner_id=?",
+            [$ownerType, $ownerId]
+        );
+        if (!$saved || empty($saved['bot_token']) || empty($saved['chat_id'])) {
+            setFlash('error', 'กรุณาบันทึก Bot Token และ Chat ID ก่อนทดสอบ');
+        } else {
+            $tg = new TelegramClient($saved);
+            $result = $tg->sendMessage("🤖 <b>AI AutoPost SEO</b>\n\nทดสอบการแจ้งเตือน Telegram สำเร็จ!");
+            if ($result['success']) setFlash('success', 'ส่งข้อความทดสอบสำเร็จ');
+            else setFlash('error', 'ส่งข้อความล้มเหลว: ' . ($result['message'] ?? 'Unknown error'));
+        }
     }
 
     redirect('/member/settings_telegram.php');
