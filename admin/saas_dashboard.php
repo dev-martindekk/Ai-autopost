@@ -3,7 +3,15 @@ $pageTitle = 'SaaS Dashboard';
 require_once __DIR__ . '/../includes/plan_manager.php';
 require_once __DIR__ . '/../includes/auth.php';
 auth()->requireRole('staff');  // ตรวจสิทธิ์ก่อน header.php output HTML
+error_log('[SAAS] auth passed, user=' . json_encode(auth()->getUser()['username'] ?? 'unknown'));
+register_shutdown_function(function() {
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        error_log('[SAAS] FATAL: ' . $err['message'] . ' in ' . $err['file'] . ':' . $err['line']);
+    }
+});
 require_once __DIR__ . '/header.php';
+error_log('[SAAS] header.php done');
 
 $stats = planManager()->getSaasStats();
 
