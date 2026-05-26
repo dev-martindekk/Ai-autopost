@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (planManager()->isTrial($memberId)) {
                 setFlash('error', 'แพ็คเกจ Trial ไม่รองรับ Auto-posting กรุณาอัพเกรด Plan');
             } elseif (planManager()->canUse($memberId, 'articles')) {
-                queue()->push('generate_article', ['site_id' => $addSiteId], $addSiteId);
+                queue()->push('generate_article', ['site_id' => $addSiteId], ['site_id' => $addSiteId]);
                 setFlash('success', 'เพิ่ม Job สร้างบทความลง Queue แล้ว');
             } else {
                 setFlash('error', 'Quota บทความเดือนนี้เต็มแล้ว');
