@@ -89,7 +89,10 @@ echo -e "${GREEN}✓  Pull สำเร็จ${NC}"
 echo ""
 
 # ─── 2.1 Clear OPcache ──────────────────────────────────────
-ssh_run "docker exec ai-autopost-web php -r \"opcache_reset(); echo 'OPcache cleared\n';\" 2>/dev/null || true"
+echo -e "${YELLOW}🧹 Clearing OPcache...${NC}"
+ssh_run "docker exec ai-autopost-web php -r \"opcache_reset(); echo 'OPcache cleared';\" 2>/dev/null || true"
+echo -e "${GREEN}✓  OPcache cleared${NC}"
+echo ""
 
 # ─── 3. รัน migrations ──────────────────────────────────────
 echo -e "${YELLOW}🗄  Running migrations...${NC}"
