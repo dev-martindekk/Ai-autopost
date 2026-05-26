@@ -88,6 +88,9 @@ ssh_run "cd $DEPLOY_PATH && git pull origin main 2>&1"
 echo -e "${GREEN}✓  Pull สำเร็จ${NC}"
 echo ""
 
+# ─── 2.1 Clear OPcache ──────────────────────────────────────
+ssh_run "docker exec ai-autopost-web php -r \"opcache_reset(); echo 'OPcache cleared\n';\" 2>/dev/null || true"
+
 # ─── 3. รัน migrations ──────────────────────────────────────
 echo -e "${YELLOW}🗄  Running migrations...${NC}"
 ssh_run "cd $DEPLOY_PATH && bash scripts/migrate.sh"
